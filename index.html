@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pass Status Digital Clock</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=JetBrains+Mono:wght@700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        .mono-time {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Pulsing animation for active status pulse indicator */
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.75; transform: scale(1.03); }
+        }
+
+        .pulse-active {
+            animation: subtle-pulse 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body id="app-body" class="min-h-screen flex flex-col justify-between p-4 md:p-8 bg-red-600 text-white transition-colors duration-700 select-none">
+
+    <!-- Top Navigation / Header -->
+    <header class="flex justify-between items-center w-full max-w-5xl mx-auto">
+        <div class="flex items-center gap-2 bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+            <i data-lucide="clock" class="w-5 h-5"></i>
+            <span class="font-semibold tracking-wide text-sm md:text-base" id="update-indicator">Updates Every 1 Min</span>
+        </div>
+        
+        <!-- Toggle Schedule Modal Button -->
+        <button id="toggle-schedule-btn" class="flex items-center gap-2 bg-black/20 hover:bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 transition cursor-pointer text-sm md:text-base font-semibold">
+            <i data-lucide="calendar-list" class="w-5 h-5"></i>
+            <span>Schedule</span>
+        </button>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 flex flex-col items-center justify-center text-center my-8 max-w-4xl mx-auto w-full">
+        
+        <!-- Date Display -->
+        <div id="date-display" class="text-xl md:text-3xl font-medium tracking-wide opacity-90 mb-2 drop-shadow">
+            Loading date...
+        </div>
+
+        <!-- Large Digital Time Display -->
+        <div id="time-display" class="mono-time text-6xl sm:text-8xl md:text-9xl font-black tracking-tight my-2 md:my-4 drop-shadow-lg">
+            00:00 AM
+        </div>
+
+        <!-- Pass Status Badge / Banner -->
+        <div id="status-card" class="mt-4 md:mt-6 px-8 py-6 md:px-12 md:py-8 rounded-3xl bg-black/25 backdrop-blur-md border border-white/20 shadow-2xl pulse-active transition-all duration-500 max-w-2xl w-full">
+            <div id="status-icon-container" class="flex justify-center mb-3">
+                <i id="status-icon" data-lucide="shield-alert" class="w-16 h-16 md:w-20 md:y-20"></i>
+            </div>
+            <h1 id="status-text" class="text-4xl sm:text-6xl md:text-7xl font-black tracking-wider uppercase drop-shadow-md">
+                NO PASSES
+            </h1>
+            <p id="status-subtext" class="mt-3 text-lg md:text-2xl font-semibold opacity-90">
+                Hallways closed during instruction time
+            </p>
+        </div>
+
+        <!-- Next Window Countdown Info -->
+        <div id="next-info-card" class="mt-6 md:mt-8 px-6 py-3 rounded-2xl bg-black/20 backdrop-blur-sm border border-white/10 text-base md:text-xl font-medium flex items-center gap-3">
+            <i data-lucide="hourglass" class="w-5 h-5 opacity-80"></i>
+            <span id="next-info-text">Calculating next pass window...</span>
+        </div>
+
+    </main>
+
+    <!-- Schedule Overlay / Modal -->
+    <div id="schedule-modal" class="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-gray-900 text-white rounded-3xl max-w-lg w-full p-6 md:p-8 shadow-2xl border border-gray-800 relative max-h-[90vh] flex flex-col">
+            
+            <!-- Modal Header -->
+            <div class="flex justify-between items-center pb-4 border-b border-gray-800">
+                <div class="flex items-center gap-3">
+                    <i data-lucide="calendar" class="w-6 h-6 text-green-400"></i>
+                    <h2 class="text-2xl font-bold">Pass Windows Schedule</h2>
+                </div>
+                <button id="close-modal-btn" class="p-2 rounded-full hover:bg-gray-800 transition">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Schedule List -->
+            <div class="my-4 overflow-y-auto space-y-3 pr-2 flex-1" id="schedule-list">
+                <!-- Schedule items dynamically inserted -->
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="pt-4 border-t border-gray-800 text-xs text-gray-400 text-center">
+                Check updates automatically every 60 seconds.
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Status Bar -->
+    <footer class="w-full max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2 text-xs md:text-sm opacity-80 text-center">
+        <div>Pass Status Digital Clock</div>
+        <div id="last-updated-text">Last checked: Just now</div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Pass schedule intervals defined in 24-hour minute offsets from midnight for precise comparison
+        // Format: [startMinutes, endMinutes, displayString]
+        const PASS_SCHEDULE = [
+            { start: parseTimeToMinutes("08:45"), end: parseTimeToMinutes("09:03"), display: "8:45 AM - 9:03 AM" },
+            { start: parseTimeToMinutes("09:38"), end: parseTimeToMinutes("09:56"), display: "9:38 AM - 9:56 AM" },
+            { start: parseTimeToMinutes("10:31"), end: parseTimeToMinutes("10:49"), display: "10:31 AM - 10:49 AM" },
+            { start: parseTimeToMinutes("11:24"), end: parseTimeToMinutes("11:59"), display: "11:24 AM - 11:59 AM" },
+            { start: parseTimeToMinutes("12:34"), end: parseTimeToMinutes("12:56"), display: "12:34 PM - 12:56 PM" },
+            { start: parseTimeToMinutes("14:04"), end: parseTimeToMinutes("14:22"), display: "2:04 PM - 2:22 PM" },
+            { start: parseTimeToMinutes("14:57"), end: parseTimeToMinutes("15:15"), display: "2:57 PM - 3:15 PM" }
+        ];
+
+        // Utility: Convert "HH:MM" string (24-hr) to total minutes from midnight
+        function parseTimeToMinutes(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return hours * 60 + minutes;
+        }
+
+        // DOM Element References
+        const bodyEl = document.getElementById('app-body');
+        const timeDisplayEl = document.getElementById('time-display');
+        const dateDisplayEl = document.getElementById('date-display');
+        const statusTextEl = document.getElementById('status-text');
+        const statusSubtextEl = document.getElementById('status-subtext');
+        const statusIconEl = document.getElementById('status-icon');
+        const nextInfoTextEl = document.getElementById('next-info-text');
+        const lastUpdatedTextEl = document.getElementById('last-updated-text');
+        const scheduleModalEl = document.getElementById('schedule-modal');
+        const toggleScheduleBtn = document.getElementById('toggle-schedule-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const scheduleListEl = document.getElementById('schedule-list');
+
+        // Render the schedule list inside the modal overlay
+        function renderScheduleList(currentMinutes) {
+            scheduleListEl.innerHTML = '';
+            
+            PASS_SCHEDULE.forEach((slot, index) => {
+                const isActive = currentMinutes >= slot.start && currentMinutes <= slot.end;
+                const isPast = currentMinutes > slot.end;
+
+                const item = document.createElement('div');
+                item.className = `p-4 rounded-xl flex items-center justify-between transition border ${
+                    isActive 
+                        ? 'bg-green-900/40 border-green-500 text-green-300 font-bold' 
+                        : isPast 
+                            ? 'bg-gray-800/40 border-gray-800 text-gray-500' 
+                            : 'bg-gray-800 border-gray-700 text-gray-200'
+                }`;
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                            isActive ? 'bg-green-500 text-black' : 'bg-gray-700 text-gray-300'
+                        }">${index + 1}</span>
+                        <span>${slot.display}</span>
+                    </div>
+                    ${isActive ? '<span class="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-md border border-green-500/30">Active Now</span>' : ''}
+                `;
+                scheduleListEl.appendChild(item);
+            });
+        }
+
+        // Primary update logic triggered every 1 minute
+        function updateClockAndStatus() {
+            const now = new Date();
+            
+            // Format time string (12-hour format with AM/PM)
+            let hours = now.getHours();
+            const minutes = now.getMinutes();
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // convert 0 to 12
+            const formattedMinutes = minutes < 10 ? '0' + minutes : minutes;
+            
+            timeDisplayEl.textContent = `${hours}:${formattedMinutes} ${ampm}`;
+
+            // Format date string
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            dateDisplayEl.textContent = now.toLocaleDateString(undefined, options);
+
+            // Calculate current total minutes from midnight
+            const currentMinutes = now.getHours() * 60 + minutes;
+
+            // Check if current time falls within any green pass window
+            let activeSlot = null;
+            let nextSlot = null;
+
+            for (let i = 0; i < PASS_SCHEDULE.length; i++) {
+                const slot = PASS_SCHEDULE[i];
+                if (currentMinutes >= slot.start && currentMinutes <= slot.end) {
+                    activeSlot = slot;
+                    break;
+                }
+                if (currentMinutes < slot.start && !nextSlot) {
+                    nextSlot = slot;
+                }
+            }
+
+            // Update UI based on active status
+            if (activeSlot) {
+                // PASSES ALLOWED (GREEN BACKGROUND)
+                bodyEl.className = bodyEl.className.replace(/bg-red-\d+/, 'bg-emerald-600');
+                statusTextEl.textContent = "PASSES ALLOWED";
+                statusSubtextEl.textContent = `Pass window open until ${formatMinutesTo12Hr(activeSlot.end)}`;
+                
+                // Swap Icon to Checkmark
+                statusIconEl.setAttribute('data-lucide', 'shield-check');
+                
+                const minsLeft = activeSlot.end - currentMinutes;
+                nextInfoTextEl.textContent = `Pass window ends in ${minsLeft} ${minsLeft === 1 ? 'minute' : 'minutes'}`;
+            } else {
+                // NO PASSES (RED BACKGROUND)
+                bodyEl.className = bodyEl.className.replace(/bg-emerald-\d+/, 'bg-red-600');
+                statusTextEl.textContent = "NO PASSES";
+                statusSubtextEl.textContent = "Hallways closed during instruction time";
+                
+                // Swap Icon to Alert
+                statusIconEl.setAttribute('data-lucide', 'shield-alert');
+
+                if (nextSlot) {
+                    const minsUntil = nextSlot.start - currentMinutes;
+                    nextInfoTextEl.textContent = `Next pass window opens in ${minsUntil} min (${formatMinutesTo12Hr(nextSlot.start)})`;
+                } else {
+                    nextInfoTextEl.textContent = "No more pass windows today";
+                }
+            }
+
+            // Refresh Lucide icons after changing attributes dynamically
+            lucide.createIcons();
+
+            // Render updated schedule state
+            renderScheduleList(currentMinutes);
+
+            // Update timestamp
+            const updateTimeStr = `${hours}:${formattedMinutes} ${ampm}`;
+            lastUpdatedTextEl.textContent = `Last checked: ${updateTimeStr}`;
+        }
+
+        // Helper: Convert minutes from midnight back to 12-hour formatted string
+        function formatMinutesTo12Hr(totalMinutes) {
+            let h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12;
+            h = h ? h : 12;
+            const formattedM = m < 10 ? '0' + m : m;
+            return `${h}:${formattedM} ${ampm}`;
+        }
+
+        // Modal Controls
+        toggleScheduleBtn.addEventListener('click', () => {
+            scheduleModalEl.classList.remove('hidden');
+            setTimeout(() => {
+                scheduleModalEl.classList.remove('opacity-0');
+            }, 10);
+        });
+
+        function closeModal() {
+            scheduleModalEl.classList.add('opacity-0');
+            setTimeout(() => {
+                scheduleModalEl.classList.add('hidden');
+            }, 300);
+        }
+
+        closeModalBtn.addEventListener('click', closeModal);
+        scheduleModalEl.addEventListener('click', (e) => {
+            if (e.target === scheduleModalEl) closeModal();
+        });
+
+        // Initial launch and minute interval timer
+        window.onload = function() {
+            lucide.createIcons();
+            updateClockAndStatus();
+
+            // Set up strict interval to check every 60,000 milliseconds (1 minute)
+            setInterval(updateClockAndStatus, 60000);
+        };
+    </script>
+</body>
+</html>
