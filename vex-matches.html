@@ -94,6 +94,7 @@
     html:not(.dark) .text-blue-300, html:not(.dark) .text-blue-400, html:not(.dark) .hover\:text-blue-300:hover { color:#1d4ed8; }
     html:not(.dark) .text-emerald-300, html:not(.dark) .text-emerald-400 { color:#047857; }
     html:not(.dark) .text-amber-400 { color:#b45309; }
+    html:not(.dark) .text-blue-400 { color:#1d4ed8; }
     html:not(.dark) .bg-red-950\/30 { background-color:rgba(254,226,226,.7); }
     html:not(.dark) .bg-blue-950\/30 { background-color:rgba(219,234,254,.7); }
     html:not(.dark) .shadow-lg, html:not(.dark) .shadow-xl, html:not(.dark) .shadow-md { box-shadow:0 4px 14px rgba(15,23,42,.08); }
@@ -295,6 +296,7 @@
 
     <!-- MAIN CONTENT VIEW: MATCH SCHEDULE -->
     <div id="matchesView" class="space-y-4">
+      <div id="currentBanner" class="hidden"></div>
       <div id="matchesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <!-- Match Cards Rendered Dynamically -->
       </div>
@@ -371,6 +373,14 @@
     const isHappeningToday = (ev) => evDay(ev.start) <= todayISO() && todayISO() <= (evDay(ev.end) || evDay(ev.start));
     const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
+    // A match counts as played if the API flags it scored, or it carries real alliance scores.
+    const isScoredMatch = (m) => {
+      if (m.scored === true) return true;
+      const r = (m.alliances || []).find(a => a.color === 'red');
+      const b = (m.alliances || []).find(a => a.color === 'blue');
+      const rs = Number(r?.score), bs = Number(b?.score);
+      return Number.isFinite(rs) && Number.isFinite(bs) && (rs + bs) > 0;
+    };
     const teamBase = (name) => String(name || '').toUpperCase().replace(/[A-Z]+$/, '');
     const matchesTeamFilter = (name, f) => {
       if (f === 'all') return true;
@@ -463,6 +473,7 @@
       matchesView: document.getElementById('matchesView'),
       standingsView: document.getElementById('standingsView'),
       matchesContainer: document.getElementById('matchesContainer'),
+      currentBanner: document.getElementById('currentBanner'),
       emptyMatchesState: document.getElementById('emptyMatchesState'),
       standingsTableBody: document.getElementById('standingsTableBody'),
 
@@ -770,6 +781,20 @@
         }
       });
 
+      const evOrder = (a, b) => {
+        const ta = a.started || a.scheduled || '', tb = b.started || b.scheduled || '';
+        return (ta && tb && ta !== tb) ? (ta < tb ? -1 : 1)
+          : (a.round - b.round) || (a.instance - b.instance) || (a.matchnum - b.matchnum);
+      };
+      const ordered = [...allMatches].sort(evOrder);
+      let lastScored = -1;
+      ordered.forEach((m, i) => { if (isScoredMatch(m)) lastScored = i; });
+      const currentIdx = ordered.findIndex((m, i) => !isScoredMatch(m) && i > lastScored);
+      const idxById = new Map(ordered.map((m, i) => [m.id, i]));
+      const eventCurrent = currentIdx >= 0
+        ? { name: ordered[currentIdx].name || `Match ${ordered[currentIdx].matchnum}`, field: ordered[currentIdx].field || '', started: !!ordered[currentIdx].started }
+        : null;
+
       const formattedMatches = [];
       allMatches.forEach(m => {
         const redAlliance = m.alliances?.find(a => a.color === 'red');
@@ -781,12 +806,14 @@
         const isTargetMatch = [...redTeams, ...blueTeams].some(isTargetTeam);
 
         if (isTargetMatch) {
-          const isCompleted = !!m.scored;
+          const isCompleted = isScoredMatch(m);
           formattedMatches.push({
             id: m.id,
             name: m.name || `Match ${m.matchnum}`,
             field: m.field || 'Main Field',
             status: isCompleted ? 'completed' : 'scheduled',
+            queue: (!isCompleted && currentIdx >= 0 && idxById.get(m.id) >= currentIdx)
+              ? ordered.slice(currentIdx, idxById.get(m.id)).filter(x => !isScoredMatch(x)).length : null,
             ts: m.started || m.scheduled || '',
             round: m.round, instance: m.instance, matchnum: m.matchnum,
             scheduled: (m.started || m.scheduled) ? new Date(m.started || m.scheduled).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'TBD',
@@ -814,7 +841,8 @@
           rank: i + 1,
           w: 0, l: 0, t: 0, wp: 0, ap: 0, sp: 0, high: 0
         })),
-        matches: formattedMatches
+        matches: formattedMatches,
+        eventCurrent
       };
 
       processEventData(liveData, silent);
@@ -824,6 +852,7 @@
     function processEventData(data, silent = false) {
       state.eventData = data;
       state.matches = data.matches || [];
+      state.eventCurrent = data.eventCurrent || null;
       state.standings = data.teams || [];
       const names = new Set(state.standings.map(t => t.team));
       state.matches.forEach(m => [...m.red, ...m.blue].forEach(t => { if (isTargetTeam(t)) names.add(t.toUpperCase()); }));
@@ -896,6 +925,25 @@
         return true;
       });
 
+      // Current-match banner
+      const nextMine = filtered.filter(m => m.queue !== null && m.queue !== undefined).sort((a, b) => a.queue - b.queue)[0];
+      if (state.eventCurrent) {
+        const c = state.eventCurrent;
+        const away = (q) => q === 0 ? 'on now' : q === 1 ? 'up next' : `${q} matches away`;
+        elements.currentBanner.className = 'bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2';
+        elements.currentBanner.innerHTML = `
+          <div class="flex items-center gap-2.5 text-sm">
+            <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span></span>
+            <span class="text-slate-300">Current match:</span>
+            <span class="font-bold text-white">${esc(c.name)}</span>
+            ${c.field ? `<span class="text-xs text-slate-400">· ${esc(c.field)}</span>` : ''}
+          </div>
+          <div class="text-xs text-amber-400 font-semibold">${nextMine ? `Your next: ${esc(nextMine.name)} (${away(nextMine.queue)})` : 'No more matches for your selection'}</div>`;
+      } else {
+        elements.currentBanner.className = 'hidden';
+        elements.currentBanner.innerHTML = '';
+      }
+
       if (filtered.length === 0) {
         elements.emptyMatchesState.classList.remove('hidden');
         return;
@@ -903,14 +951,15 @@
 
       elements.emptyMatchesState.classList.add('hidden');
 
-      filtered.forEach(m => {
+      const renderCard = (m) => {
         const card = document.createElement('div');
+        const isCurrent = m.queue === 0;
         const isCompleted = m.status === 'completed';
         const redWon = isCompleted && m.redScore > m.blueScore;
         const blueWon = isCompleted && m.blueScore > m.redScore;
         const tie = isCompleted && m.redScore === m.blueScore;
 
-        card.className = `bg-slate-800 border ${isCompleted ? 'border-slate-700/80' : 'border-blue-500/30'} rounded-2xl p-4 shadow-lg flex flex-col justify-between space-y-4 hover:border-slate-600 transition`;
+        card.className = `bg-slate-800 border ${isCurrent ? 'border-amber-500/60 ring-2 ring-amber-400/40' : isCompleted ? 'border-slate-700/80' : 'border-blue-500/30'} rounded-2xl p-4 shadow-lg flex flex-col justify-between space-y-4 hover:border-slate-600 transition`;
 
         // Card Header
         let cardHtml = `
@@ -920,6 +969,7 @@
               <span class="text-[11px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700 font-mono">${m.field}</span>
             </div>
             <div class="flex items-center space-x-1.5">
+              ${isCurrent ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">NOW</span>' : (m.queue === 1 ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40">NEXT</span>' : '')}
               <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
                 ${isCompleted ? 'Final' : m.scheduled}
               </span>
@@ -974,9 +1024,25 @@
           `;
         }
 
+        if (!isCompleted && m.queue > 1) {
+          cardHtml += `<div class="text-[11px] text-slate-400 text-right font-medium">${m.queue} matches away</div>`;
+        }
+
         card.innerHTML = cardHtml;
         elements.matchesContainer.appendChild(card);
-      });
+      };
+
+      const addHeader = (text, n) => {
+        const h = document.createElement('div');
+        h.className = 'col-span-full flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-400 mt-2';
+        h.innerHTML = `<span>${text} (${n})</span><span class="flex-1 h-px bg-slate-700"></span>`;
+        elements.matchesContainer.appendChild(h);
+      };
+
+      const upcomingList = filtered.filter(m => m.status !== 'completed');
+      const scoredList = filtered.filter(m => m.status === 'completed');
+      if (upcomingList.length) { addHeader('Current & upcoming', upcomingList.length); upcomingList.forEach(renderCard); }
+      if (scoredList.length) { addHeader('Scored matches', scoredList.length); scoredList.forEach(renderCard); }
     }
 
     function renderStandings() {
