@@ -266,6 +266,10 @@
           <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
           <span>Standings & Stats</span>
         </button>
+        <button id="tabSkillsBtn" class="tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition">
+          <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
+          <span>Skills Rankings</span>
+        </button>
       </div>
 
     </div>
@@ -334,6 +338,29 @@
             <tbody id="standingsTableBody" class="divide-y divide-slate-700/60 text-xs font-medium">
               <!-- Standings Data Rendered Here -->
             </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT VIEW: ROBOT SKILLS RANKINGS -->
+    <div id="skillsView" class="hidden space-y-3">
+      <p id="skillsNote" class="text-xs text-slate-400"></p>
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-900/80 border-b border-slate-700 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <th class="py-3 px-4 text-center">Skills Rank</th>
+                <th class="py-3 px-4">Team</th>
+                <th class="py-3 px-4 text-center">Total</th>
+                <th class="py-3 px-4 text-center">Driver</th>
+                <th class="py-3 px-4 text-center">Driver Rank</th>
+                <th class="py-3 px-4 text-center">Programming</th>
+                <th class="py-3 px-4 text-center">Prog. Rank</th>
+              </tr>
+            </thead>
+            <tbody id="skillsTableBody" class="divide-y divide-slate-700/60 text-xs font-medium"></tbody>
           </table>
         </div>
       </div>
@@ -470,6 +497,10 @@
 
       tabMatchesBtn: document.getElementById('tabMatchesBtn'),
       tabStandingsBtn: document.getElementById('tabStandingsBtn'),
+      tabSkillsBtn: document.getElementById('tabSkillsBtn'),
+      skillsView: document.getElementById('skillsView'),
+      skillsNote: document.getElementById('skillsNote'),
+      skillsTableBody: document.getElementById('skillsTableBody'),
       matchesView: document.getElementById('matchesView'),
       standingsView: document.getElementById('standingsView'),
       matchesContainer: document.getElementById('matchesContainer'),
@@ -516,6 +547,7 @@
       // Tab Switchers
       elements.tabMatchesBtn.addEventListener('click', () => setActiveTab('matches'));
       elements.tabStandingsBtn.addEventListener('click', () => setActiveTab('standings'));
+      elements.tabSkillsBtn.addEventListener('click', () => setActiveTab('skills'));
 
       // Search and Status Filters
       elements.matchSearchInput.addEventListener('input', (e) => {
@@ -752,6 +784,7 @@
         if (rankingsRes.status === 'fulfilled') allRankings.push(...rankingsRes.value);
       }
 
+      const skillsRows = await fetchAll(`/events/${eventId}/skills`).catch(() => []);
       const targetTeamsMap = new Map();
       allTeams.forEach(t => {
         const num = (t.number || '').trim().toUpperCase();
@@ -779,6 +812,34 @@
             high: r.high_score || 0
           });
         }
+      });
+
+      // Robot skills: best driver + best programming score per team, ranked event-wide
+      const skillTeams = new Map();
+      skillsRows.forEach(r => {
+        const n = (r.team?.name || r.team?.number || '').trim().toUpperCase();
+        const type = String(r.type || '').toLowerCase();
+        if (!n || (type !== 'driver' && type !== 'programming')) return;
+        if (!skillTeams.has(n)) skillTeams.set(n, { team: n, driver: 0, driverAtt: 0, prog: 0, progAtt: 0 });
+        const t = skillTeams.get(n);
+        const sc = Number(r.score) || 0, att = Number(r.attempts) || 0;
+        if (type === 'driver') { t.driver = Math.max(t.driver, sc); t.driverAtt = Math.max(t.driverAtt, att); }
+        else { t.prog = Math.max(t.prog, sc); t.progAtt = Math.max(t.progAtt, att); }
+      });
+      const skillList = [...skillTeams.values()].map(t => ({ ...t, total: t.driver + t.prog }));
+      const rankBy = (arr, cmp) => {
+        const sorted = [...arr].sort(cmp), ranks = new Map();
+        sorted.forEach((t, i) => ranks.set(t.team, (i > 0 && cmp(sorted[i - 1], t) === 0) ? ranks.get(sorted[i - 1].team) : i + 1));
+        return ranks;
+      };
+      const totalRank = rankBy(skillList.filter(t => t.total > 0), (a, b) => (b.total - a.total) || (b.prog - a.prog) || (b.driver - a.driver));
+      const driverRank = rankBy(skillList.filter(t => t.driver > 0), (a, b) => b.driver - a.driver);
+      const progRank = rankBy(skillList.filter(t => t.prog > 0), (a, b) => b.prog - a.prog);
+      const followed = new Set([...targetTeamsMap.keys(), ...[...skillTeams.keys()].filter(isTargetTeam)]);
+      const skillsOut = [...followed].map(n => {
+        const t = skillTeams.get(n) || { team: n, driver: 0, driverAtt: 0, prog: 0, progAtt: 0, total: 0 };
+        const total = t.driver + t.prog;
+        return { ...t, total, rank: totalRank.get(n) || 0, driverRank: driverRank.get(n) || 0, progRank: progRank.get(n) || 0 };
       });
 
       const evOrder = (a, b) => {
@@ -841,7 +902,9 @@
           w: 0, l: 0, t: 0, wp: 0, ap: 0, sp: 0, high: 0
         })),
         matches: formattedMatches,
-        eventCurrent
+        eventCurrent,
+        skills: skillsOut,
+        skillsCount: totalRank.size
       };
 
       processEventData(liveData, silent);
@@ -852,6 +915,8 @@
       state.eventData = data;
       state.matches = data.matches || [];
       state.eventCurrent = data.eventCurrent || null;
+      state.skills = data.skills || [];
+      state.skillsCount = data.skillsCount || 0;
       state.standings = data.teams || [];
       const names = new Set(state.standings.map(t => t.team));
       state.matches.forEach(m => [...m.red, ...m.blue].forEach(t => { if (isTargetTeam(t)) names.add(t.toUpperCase()); }));
@@ -881,6 +946,7 @@
       // Render Views
       renderMatches();
       renderStandings();
+      renderSkills();
     }
 
     function updateSummaryStats() {
@@ -1107,21 +1173,49 @@
       renderTeamFilters();
       renderMatches();
       renderStandings();
+      renderSkills();
     }
 
     function setActiveTab(tab) {
       state.activeTab = tab;
-      if (tab === 'matches') {
-        elements.tabMatchesBtn.className = 'tab-btn bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-900/20';
-        elements.tabStandingsBtn.className = 'tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition';
-        elements.matchesView.classList.remove('hidden');
-        elements.standingsView.classList.add('hidden');
-      } else {
-        elements.tabStandingsBtn.className = 'tab-btn bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-900/20';
-        elements.tabMatchesBtn.className = 'tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition';
-        elements.standingsView.classList.remove('hidden');
-        elements.matchesView.classList.add('hidden');
+      const on = 'tab-btn bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-900/20';
+      const off = 'tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition';
+      elements.tabMatchesBtn.className = tab === 'matches' ? on : off;
+      elements.tabStandingsBtn.className = tab === 'standings' ? on : off;
+      elements.tabSkillsBtn.className = tab === 'skills' ? on : off;
+      elements.matchesView.classList.toggle('hidden', tab !== 'matches');
+      elements.standingsView.classList.toggle('hidden', tab !== 'standings');
+      elements.skillsView.classList.toggle('hidden', tab !== 'skills');
+    }
+
+    function renderSkills() {
+      const rows = (state.skills || [])
+        .filter(t => matchesTeamFilter(t.team, state.teamFilter))
+        .sort((a, b) => {
+          const ra = a.rank || Infinity, rb = b.rank || Infinity;
+          return ra === rb ? String(a.team).localeCompare(String(b.team)) : ra - rb;
+        });
+      elements.skillsNote.textContent = state.skillsCount
+        ? `Ranked against ${state.skillsCount} teams with skills scores at this event. Total is best driver score plus best programming score.`
+        : 'No skills scores have been posted for this event yet.';
+      if (!rows.length) {
+        elements.skillsTableBody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500 text-xs">No skills data for the selected teams.</td></tr>';
+        return;
       }
+      const cell = (score, att) => score > 0
+        ? `<span class="font-bold text-white">${score}</span>${att ? `<span class="text-slate-500"> (${att} ${att === 1 ? 'run' : 'runs'})</span>` : ''}`
+        : '<span class="text-slate-500">—</span>';
+      const rk = (r) => r ? `#${r}` : '—';
+      elements.skillsTableBody.innerHTML = rows.map(t => `
+        <tr class="hover:bg-slate-800/60 transition border-b border-slate-700/40">
+          <td class="py-3.5 px-4 text-center font-bold text-slate-300">${rk(t.rank)}</td>
+          <td class="py-3.5 px-4 font-mono font-bold text-white">${esc(t.team)}</td>
+          <td class="py-3.5 px-4 text-center">${t.total > 0 ? `<span class="font-bold text-emerald-400">${t.total}</span>` : '<span class="text-slate-500">—</span>'}</td>
+          <td class="py-3.5 px-4 text-center">${cell(t.driver, t.driverAtt)}</td>
+          <td class="py-3.5 px-4 text-center text-slate-300">${rk(t.driverRank)}</td>
+          <td class="py-3.5 px-4 text-center">${cell(t.prog, t.progAtt)}</td>
+          <td class="py-3.5 px-4 text-center text-slate-300">${rk(t.progRank)}</td>
+        </tr>`).join('');
     }
 
     function showStatus(message, type = 'info') {
