@@ -1032,17 +1032,7 @@
         elements.matchesContainer.appendChild(card);
       };
 
-      const addHeader = (text, n) => {
-        const h = document.createElement('div');
-        h.className = 'col-span-full flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-400 mt-2';
-        h.innerHTML = `<span>${text} (${n})</span><span class="flex-1 h-px bg-slate-700"></span>`;
-        elements.matchesContainer.appendChild(h);
-      };
-
-      const upcomingList = filtered.filter(m => m.status !== 'completed');
-      const scoredList = filtered.filter(m => m.status === 'completed');
-      if (upcomingList.length) { addHeader('Current & upcoming', upcomingList.length); upcomingList.forEach(renderCard); }
-      if (scoredList.length) { addHeader('Scored matches', scoredList.length); scoredList.forEach(renderCard); }
+      filtered.forEach(renderCard);
     }
 
     function renderStandings() {
