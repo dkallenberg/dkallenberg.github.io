@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VEX Finals Bracket</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            vex: {
+              red: '#e53e3e',
+              redDark: '#9b2c2c',
+              blue: '#3182ce',
+              blueDark: '#2c5282',
+              darkBg: '#0f172a',
+              cardBg: '#1e293b',
+              border: '#334155'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+
+    /* ---- Light theme (applied when <html> has no .dark class) ---- */
+    html:not(.dark) body { background:#f1f5f9; color:#0f172a; }
+    html:not(.dark) .bg-slate-900 { background-color:#f1f5f9; }
+    html:not(.dark) .bg-slate-900\/90 { background-color:rgba(255,255,255,.92); }
+    html:not(.dark) .bg-slate-900\/80 { background-color:rgba(241,245,249,.9); }
+    html:not(.dark) .bg-slate-900\/60 { background-color:rgba(241,245,249,.9); }
+    html:not(.dark) .bg-slate-800 { background-color:#ffffff; }
+    html:not(.dark) .bg-slate-800\/80,
+    html:not(.dark) .bg-slate-800\/60 { background-color:rgba(255,255,255,.92); }
+    html:not(.dark) .bg-slate-800\/40 { background-color:rgba(248,250,252,.9); }
+    html:not(.dark) .bg-slate-700 { background-color:#e2e8f0; }
+    html:not(.dark) .hover\:bg-slate-700:hover { background-color:#cbd5e1; }
+    html:not(.dark) .hover\:bg-slate-600:hover { background-color:#cbd5e1; }
+    html:not(.dark) .hover\:bg-slate-800\/60:hover { background-color:rgba(226,232,240,.7); }
+    html:not(.dark) .border-slate-800,
+    html:not(.dark) .border-slate-700,
+    html:not(.dark) .border-slate-700\/80,
+    html:not(.dark) .border-slate-700\/70,
+    html:not(.dark) .border-slate-700\/60,
+    html:not(.dark) .border-slate-700\/50,
+    html:not(.dark) .border-slate-700\/40 { border-color:#cbd5e1; }
+    html:not(.dark) .divide-slate-700\/60 > :not([hidden]) ~ :not([hidden]) { border-color:#e2e8f0; }
+    html:not(.dark) .hover\:border-slate-600:hover { border-color:#94a3b8; }
+    html:not(.dark) .text-white,
+    html:not(.dark) .text-slate-100 { color:#0f172a; }
+    html:not(.dark) .text-slate-200 { color:#1e293b; }
+    html:not(.dark) .text-slate-300 { color:#334155; }
+    html:not(.dark) .text-slate-400,
+    html:not(.dark) .text-slate-500 { color:#64748b; }
+    html:not(.dark) .hover\:text-white:hover,
+    html:not(.dark) .hover\:text-slate-200:hover { color:#0f172a; }
+    html:not(.dark) .placeholder-slate-500::placeholder { color:#94a3b8; }
+    html:not(.dark) .text-red-300, html:not(.dark) .text-red-400, html:not(.dark) .text-red-500 { color:#b91c1c; }
+    html:not(.dark) .text-blue-300, html:not(.dark) .text-blue-400, html:not(.dark) .hover\:text-blue-300:hover { color:#1d4ed8; }
+    html:not(.dark) .text-emerald-300, html:not(.dark) .text-emerald-400 { color:#047857; }
+    html:not(.dark) .text-amber-400 { color:#b45309; }
+    html:not(.dark) .text-blue-400 { color:#1d4ed8; }
+    html:not(.dark) .bg-red-950\/30 { background-color:rgba(254,226,226,.7); }
+    html:not(.dark) .bg-blue-950\/30 { background-color:rgba(219,234,254,.7); }
+    html:not(.dark) .shadow-lg, html:not(.dark) .shadow-xl, html:not(.dark) .shadow-md { box-shadow:0 4px 14px rgba(15,23,42,.08); }
+    /* keep white text on solid coloured buttons */
+    html:not(.dark) .bg-blue-600, html:not(.dark) .bg-blue-500,
+    html:not(.dark) .bg-red-600, html:not(.dark) .bg-gradient-to-r { color:#ffffff; }
+    html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track { background:#e2e8f0; }
+    html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background:#94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col transition-colors duration-200 custom-scrollbar">
+
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 via-purple-600 to-blue-600 p-0.5 shadow-lg">
+          <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+            <i data-lucide="trophy" class="w-5 h-5 text-red-500"></i>
+          </div>
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg tracking-tight text-white">VEX FINALS BRACKET</h1>
+          <p class="text-xs text-slate-400">Elimination rounds, live</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <a id="backLink" href="vex.matches.html" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i><span>Match tracker</span>
+        </a>
+        <button id="themeToggleBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition"></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-5">
+
+    <section class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
+        <input id="skuInput" type="text" placeholder="Event code, e.g. RE-V5RC-26-4480" autocomplete="off" spellcheck="false"
+          class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase tracking-wide" />
+        <input id="teamsInput" type="text" placeholder="Highlight teams, e.g. 586, 587 (optional)" autocomplete="off" spellcheck="false"
+          class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase tracking-wide" />
+        <button id="loadBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl transition text-sm">Show bracket</button>
+      </div>
+    </section>
+
+    <div id="statusMsg" class="hidden rounded-xl p-4 border text-sm"></div>
+
+    <div id="bracketWrap" class="hidden space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="eventName" class="text-xl font-bold text-white"></h2>
+          <p id="eventMeta" class="text-xs text-slate-400 mt-0.5"></p>
+        </div>
+        <span id="lastUpdated" class="text-xs text-slate-500 flex items-center gap-1.5"></span>
+      </div>
+      <div id="divTabs" class="flex flex-wrap gap-1.5"></div>
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl overflow-x-auto custom-scrollbar">
+        <div id="bracket" class="flex gap-6 min-w-max"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-800 bg-slate-900 py-5 mt-8 text-xs text-slate-500 text-center">Data source: events.vex.com</footer>
+
+  <script>
+    const DEFAULT_BEARER_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiNzMzODkyNTBjNjA3MTg1NGI1YTA4Njg5MDNmYTkwMmM2MjM3YjBkYTQzZmNmODQzOTc0MjA5NmM5MmE3MzcwNGExZmI2ZmE0YWNmZjUyYmYiLCJpYXQiOjE3OTM0MDYzOTIuMzYxMjYwOSwibmJmIjoxNzkzNDA2MzkyLjM2MTI2MywiZXhwIjoyNzQwMTc3NTkyLjM1NjY5MjgsInN1YiI6IjEyMzUzOSIsInNjb3BlcyI6W119.BZpXY1KL9WZHW_O-igw3qa1d4gBhW0efci3RfeCH5eHf_66T1zYQx0uuhBjpmRjFPBaEu2V_8bR0wQs4H7j1cb4oz3_Vwd_zle8VWBcdL7ScjfGL1rF69Mpv8W8Tja1RH6Pe3Hus3RHlf-MN4Kh1osLJSu-kIsKaPpZBIwtFTVPHGK7L5V7d0j9Nr5AHudovAiSYk8Xzl8kM7F1OhkpwrsyBeK59XzaLu5VeKWt0gKtBj444U53YJlMuxqdu7g2mO5ZssXZJHLhBwY1pfXxMu8V-Pt_vvlmNF1YqXpMLx8AhrVhhwlVCnH2VrPsu4xqTKi431Lld3WcQTsJZvQbdZbU5B7gfMTgE0HoWjkTXZDjzJI8mhD8UmQG1DyRpiLmtIL5lBcIyoKntfhR8uvdnlEG1u6LnUN2kaTg6amUAUDMAT5KI7iRd4C-6jIiIIB_Yo3R8D_no-Sqmg3UixFwyqC7W1dRi18X1NYgEMtxEwvPjc1r_0RS3HLy3oHah0-FFj5FpXYu0oZ1SgyZaZYCR5mqiIHwG7kfgYrn5c2SSFLqgzs6eZRTZ8F1qirWBe83oMZYw1wACP3rK4yHXT5aWUPDEprnQBbmBGyU8bgLczJU48SlF9Yxc7G0bEhvXjjKd04iMiuIkLxpalniq-m-aqgII86qNsyjogWECWspRrSo";
+    const API_BASE = 'https://events.vex.com/api/v2';
+    const ROUND_NAMES = { 9: 'Round of 128', 8: 'Round of 64', 7: 'Round of 32', 6: 'Round of 16', 3: 'Quarterfinals', 4: 'Semifinals', 5: 'Finals' };
+    const ROUND_SHORT = { 9: 'R128', 8: 'R64', 7: 'R32', 6: 'R16', 3: 'QF', 4: 'SF', 5: 'F' };
+    const ROUND_ORDER = [9, 8, 7, 6, 3, 4, 5];
+    const REFRESH_MS = 60000;
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const parseTeams = (str) => [...new Set(String(str || '').toUpperCase().split(/[\s,;]+/).map(x => x.trim()).filter(Boolean))];
+
+    let follow = [];
+    let divisions = [];        // [{id, name, matches:[]}]
+    let activeDiv = null;
+    let eventInfo = null;
+    let timer = null, busy = false, currentSku = '';
+
+    const isFollowed = (n) => {
+      const u = String(n || '').toUpperCase();
+      return follow.some(t => u === t || (/^\d+$/.test(t) && new RegExp('^' + t + '[A-Z]$').test(u)));
+    };
+
+    // ---------- API ----------
+    async function apiGet(path) {
+      let res;
+      try {
+        res = await fetch(API_BASE + path, { headers: { 'Authorization': `Bearer ${DEFAULT_BEARER_TOKEN}`, 'Accept': 'application/json' } });
+      } catch (e) { throw new Error('Could not reach events.vex.com. Check your connection and open this file directly from your computer.'); }
+      if (res.status === 401 || res.status === 403) throw new Error('The API rejected the token built into this page.');
+      if (res.status === 429) throw new Error('Too many requests. Wait a minute and try again.');
+      if (!res.ok) throw new Error(`events.vex.com returned an error (${res.status}).`);
+      return res.json();
+    }
+    async function apiAll(path) {
+      let page = 1, last = 1, rows = [];
+      do {
+        const j = await apiGet(`${path}${path.includes('?') ? '&' : '?'}per_page=250&page=${page}`);
+        rows = rows.concat(j.data || []);
+        last = (j.meta && j.meta.last_page) || 1;
+        page++;
+      } while (page <= last);
+      return rows;
+    }
+
+    // ---------- Status ----------
+    function showStatus(msg, type = 'info') {
+      const el = $('statusMsg');
+      el.textContent = msg;
+      el.className = 'rounded-xl p-4 border text-sm ' + (type === 'error'
+        ? 'bg-red-500/10 border-red-500/30 text-red-300' : 'bg-blue-500/10 border-blue-500/30 text-blue-300');
+    }
+    const hideStatus = () => $('statusMsg').className = 'hidden';
+
+    // ---------- Load ----------
+    async function load(sku, silent = false) {
+      const ev = await apiGet(`/events?sku%5B%5D=${encodeURIComponent(sku)}`);
+      if (!ev.data || !ev.data.length) throw new Error(`No event found with code ${sku}.`);
+      const event = ev.data[0];
+      const divs = (event.divisions && event.divisions.length) ? event.divisions : [{ id: 1, name: 'Division 1' }];
+      const loaded = [];
+      for (const d of divs) {
+        const matches = await apiAll(`/events/${event.id}/divisions/${d.id}/matches`);
+        loaded.push({ id: d.id, name: d.name || `Division ${d.id}`, matches });
+      }
+      eventInfo = event;
+      divisions = loaded;
+      if (!activeDiv || !divisions.some(d => d.id === activeDiv)) {
+        // default to the division with the most elimination matches
+        const count = (d) => d.matches.filter(m => ROUND_ORDER.includes(m.round)).length;
+        activeDiv = [...divisions].sort((a, b) => count(b) - count(a))[0].id;
+      }
+      render();
+    }
+
+    // ---------- Bracket model ----------
+    const isScored = (m) => {
+      if (m.scored === true) return true;
+      const r = (m.alliances || []).find(a => a.color === 'red'), b = (m.alliances || []).find(a => a.color === 'blue');
+      const rs = Number(r?.score), bs = Number(b?.score);
+      return Number.isFinite(rs) && Number.isFinite(bs) && (rs + bs) > 0;
+    };
+    const teamNames = (a) => (a?.teams || []).map(t => t.team?.name).filter(Boolean);
+
+    function buildSeries(matches) {
+      const elim = matches.filter(m => ROUND_ORDER.includes(m.round));
+      const groups = new Map();
+      elim.forEach(m => {
+        const k = m.round + '-' + m.instance;
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(m);
+      });
+      const series = [];
+      groups.forEach((list, key) => {
+        list.sort((a, b) => a.matchnum - b.matchnum);
+        const first = list[0];
+        const redA = (first.alliances || []).find(a => a.color === 'red');
+        const blueA = (first.alliances || []).find(a => a.color === 'blue');
+        const sideA = { teams: teamNames(redA), wins: 0 }, sideB = { teams: teamNames(blueA), wins: 0 };
+        const games = list.map(m => {
+          const r = (m.alliances || []).find(a => a.color === 'red'), b = (m.alliances || []).find(a => a.color === 'blue');
+          let aAlliance = r, bAlliance = b;
+          const rn = teamNames(r), bn = teamNames(b);
+          const overlapR = rn.filter(n => sideA.teams.includes(n)).length, overlapB = bn.filter(n => sideA.teams.includes(n)).length;
+          if (overlapB > overlapR) { aAlliance = b; bAlliance = r; }
+          if (!sideA.teams.length && teamNames(aAlliance).length) sideA.teams = teamNames(aAlliance);
+          if (!sideB.teams.length && teamNames(bAlliance).length) sideB.teams = teamNames(bAlliance);
+          const scored = isScored(m);
+          const sa = Number(aAlliance?.score) || 0, sb = Number(bAlliance?.score) || 0;
+          if (scored) { if (sa > sb) sideA.wins++; else if (sb > sa) sideB.wins++; }
+          return { m, scored, sa, sb, label: m.matchnum };
+        });
+        const round = first.round;
+        const needed = round === 5 ? 2 : 1;
+        const winner = sideA.wins >= needed ? 'A' : sideB.wins >= needed ? 'B' : null;
+        series.push({ key, round, instance: first.instance, sideA, sideB, games, winner, needed,
+          field: first.field || '', time: first.started || first.scheduled || '' });
+      });
+      return series;
+    }
+
+    // ---------- Render ----------
+    function render() {
+      const div = divisions.find(d => d.id === activeDiv);
+      $('eventName').textContent = eventInfo.name || currentSku;
+      $('eventMeta').textContent = [currentSku, eventInfo.location?.city, eventInfo.location?.region].filter(Boolean).join(' · ');
+
+      $('divTabs').innerHTML = divisions.length > 1 ? divisions.map(d => `
+        <button data-div="${d.id}" class="div-tab text-xs font-semibold px-3.5 py-1.5 rounded-lg transition ${d.id === activeDiv ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}">${esc(d.name)}</button>`).join('') : '';
+      document.querySelectorAll('.div-tab').forEach(b => b.addEventListener('click', () => { activeDiv = Number(b.dataset.div) || b.dataset.div; render(); }));
+
+      const series = buildSeries(div.matches);
+      $('bracketWrap').classList.remove('hidden');
+      if (!series.length) {
+        $('bracket').innerHTML = '<p class="text-sm text-slate-400 py-6 px-2">No elimination matches are posted for this division yet. The bracket appears after alliance selection.</p>';
+        return;
+      }
+      hideStatus();
+
+      // current series = first unscored elimination match
+      const elimMatches = div.matches.filter(m => ROUND_ORDER.includes(m.round)).sort((a, b) => {
+        const ta = a.started || a.scheduled || '', tb = b.started || b.scheduled || '';
+        return (ta && tb && ta !== tb) ? (ta < tb ? -1 : 1) : (ROUND_ORDER.indexOf(a.round) - ROUND_ORDER.indexOf(b.round)) || (a.instance - b.instance) || (a.matchnum - b.matchnum);
+      });
+      const cur = elimMatches.find(m => !isScored(m));
+      const curKey = cur ? cur.round + '-' + cur.instance : null;
+
+      const cols = ROUND_ORDER.filter(r => series.some(s => s.round === r));
+      $('bracket').innerHTML = cols.map(r => {
+        const list = series.filter(s => s.round === r).sort((a, b) => a.instance - b.instance);
+        return `
+        <div class="flex flex-col w-64 shrink-0">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">${esc(ROUND_NAMES[r])}</h3>
+          <div class="flex flex-col justify-around gap-4 flex-1">${list.map(s => seriesCard(s, s.key === curKey)).join('')}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function sideRow(side, isWinner, hasWinner, wins, showWins, lastScore) {
+      const names = side.teams.length
+        ? side.teams.map(n => isFollowed(n) ? `<span class="px-1 rounded bg-amber-500/20 text-amber-400 font-bold">${esc(n)}</span>` : esc(n)).join(', ')
+        : '<span class="text-slate-500 italic">TBD</span>';
+      const num = showWins ? wins : (lastScore ?? '');
+      return `
+        <div class="flex items-center justify-between gap-2 px-3 py-2 ${isWinner ? 'bg-emerald-500/10' : ''} ${hasWinner && !isWinner ? 'opacity-60' : ''}">
+          <div class="text-xs ${isWinner ? 'font-bold text-white' : 'text-slate-200'} leading-snug">${names}</div>
+          <div class="text-sm font-extrabold tabular-nums ${isWinner ? 'text-emerald-400' : 'text-slate-300'}">${num}</div>
+        </div>`;
+    }
+
+    function seriesCard(s, isCurrent) {
+      const multi = s.games.length > 1 || s.round === 5;
+      const played = s.games.filter(g => g.scored);
+      const last = played[played.length - 1];
+      const hasWinner = !!s.winner;
+      const label = (s.round === 5 ? 'Finals' : `${ROUND_SHORT[s.round]} ${s.instance}`);
+      const gameLines = s.games.map(g => g.scored
+        ? `M${g.label}: ${g.sa}–${g.sb}`
+        : `M${g.label}: ${g.m.started || g.m.scheduled ? new Date(g.m.started || g.m.scheduled).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}`).join(' · ');
+      return `
+        <div class="rounded-xl border ${isCurrent ? 'border-amber-500/60 ring-2 ring-amber-400/40' : 'border-slate-700'} bg-slate-900 overflow-hidden shadow-md">
+          <div class="flex items-center justify-between px-3 py-1.5 border-b border-slate-700 bg-slate-800 text-[11px]">
+            <span class="font-bold text-slate-300 uppercase tracking-wide">${esc(label)}</span>
+            ${isCurrent ? '<span class="font-bold text-amber-400 animate-pulse">NOW</span>' : `<span class="text-slate-400">${esc(s.field)}</span>`}
+          </div>
+          ${sideRow(s.sideA, s.winner === 'A', hasWinner, s.sideA.wins, multi, last ? last.sa : null)}
+          <div class="h-px bg-slate-700"></div>
+          ${sideRow(s.sideB, s.winner === 'B', hasWinner, s.sideB.wins, multi, last ? last.sb : null)}
+          <div class="px-3 py-1.5 border-t border-slate-700 text-[11px] text-slate-400">${esc(gameLines)}</div>
+        </div>`;
+    }
+
+    // ---------- Refresh / controls ----------
+    function stamp(failed) {
+      $('lastUpdated').innerHTML = failed
+        ? '<span class="text-amber-400">Update failed, retrying in 1 min</span>'
+        : `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>Live · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}`;
+    }
+    async function refresh() {
+      if (busy || !currentSku) return;
+      busy = true;
+      try { await load(currentSku, true); stamp(false); } catch (e) { console.error(e); stamp(true); } finally { busy = false; }
+    }
+    async function start() {
+      const sku = $('skuInput').value.trim().toUpperCase();
+      if (!sku) { showStatus('Enter an event code.', 'error'); return; }
+      follow = parseTeams($('teamsInput').value);
+      currentSku = sku; activeDiv = null;
+      clearInterval(timer);
+      $('bracketWrap').classList.add('hidden');
+      showStatus('Loading bracket…');
+      $('loadBtn').disabled = true;
+      try {
+        await load(sku);
+        stamp(false);
+        timer = setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MS);
+        const back = new URLSearchParams({ sku, teams: follow.join(',') });
+        $('backLink').href = 'vex.matches.html?' + back.toString();
+      } catch (e) {
+        showStatus(e.message, 'error');
+      } finally { $('loadBtn').disabled = false; }
+    }
+
+    function updateThemeIcon() {
+      const dark = document.documentElement.classList.contains('dark');
+      $('themeToggleBtn').innerHTML = `<i data-lucide="${dark ? 'moon' : 'sun'}" class="w-4 h-4"></i>`;
+      lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      let saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) {}
+      document.documentElement.classList.toggle('dark', saved !== 'light');
+      $('themeToggleBtn').addEventListener('click', () => {
+        const dark = document.documentElement.classList.toggle('dark');
+        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+        updateThemeIcon();
+      });
+      updateThemeIcon();
+      $('loadBtn').addEventListener('click', start);
+      ['skuInput', 'teamsInput'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') start(); }));
+      const p = new URLSearchParams(location.search);
+      let teams = p.get('teams') || '';
+      if (!teams) { try { teams = localStorage.getItem('vex_teams') || ''; } catch (e) {} }
+      $('teamsInput').value = teams;
+      if (p.get('sku')) { $('skuInput').value = p.get('sku'); start(); }
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && currentSku) refresh(); });
+  </script>
+</body>
+</html>
