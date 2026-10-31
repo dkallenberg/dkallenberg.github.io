@@ -57,6 +57,51 @@
     .custom-scrollbar::-webkit-scrollbar-thumb:hover {
       background: #475569;
     }
+
+    /* ---- Light theme (applied when <html> has no .dark class) ---- */
+    html:not(.dark) body { background:#f1f5f9; color:#0f172a; }
+    html:not(.dark) .bg-slate-900 { background-color:#f1f5f9; }
+    html:not(.dark) .bg-slate-900\/90 { background-color:rgba(255,255,255,.92); }
+    html:not(.dark) .bg-slate-900\/80 { background-color:rgba(241,245,249,.9); }
+    html:not(.dark) .bg-slate-900\/60 { background-color:rgba(241,245,249,.9); }
+    html:not(.dark) .bg-slate-800 { background-color:#ffffff; }
+    html:not(.dark) .bg-slate-800\/80,
+    html:not(.dark) .bg-slate-800\/60 { background-color:rgba(255,255,255,.92); }
+    html:not(.dark) .bg-slate-800\/40 { background-color:rgba(248,250,252,.9); }
+    html:not(.dark) .bg-slate-700 { background-color:#e2e8f0; }
+    html:not(.dark) .hover\:bg-slate-700:hover { background-color:#cbd5e1; }
+    html:not(.dark) .hover\:bg-slate-600:hover { background-color:#cbd5e1; }
+    html:not(.dark) .hover\:bg-slate-800\/60:hover { background-color:rgba(226,232,240,.7); }
+    html:not(.dark) .border-slate-800,
+    html:not(.dark) .border-slate-700,
+    html:not(.dark) .border-slate-700\/80,
+    html:not(.dark) .border-slate-700\/70,
+    html:not(.dark) .border-slate-700\/60,
+    html:not(.dark) .border-slate-700\/50,
+    html:not(.dark) .border-slate-700\/40 { border-color:#cbd5e1; }
+    html:not(.dark) .divide-slate-700\/60 > :not([hidden]) ~ :not([hidden]) { border-color:#e2e8f0; }
+    html:not(.dark) .hover\:border-slate-600:hover { border-color:#94a3b8; }
+    html:not(.dark) .text-white,
+    html:not(.dark) .text-slate-100 { color:#0f172a; }
+    html:not(.dark) .text-slate-200 { color:#1e293b; }
+    html:not(.dark) .text-slate-300 { color:#334155; }
+    html:not(.dark) .text-slate-400,
+    html:not(.dark) .text-slate-500 { color:#64748b; }
+    html:not(.dark) .hover\:text-white:hover,
+    html:not(.dark) .hover\:text-slate-200:hover { color:#0f172a; }
+    html:not(.dark) .placeholder-slate-500::placeholder { color:#94a3b8; }
+    html:not(.dark) .text-red-300, html:not(.dark) .text-red-400, html:not(.dark) .text-red-500 { color:#b91c1c; }
+    html:not(.dark) .text-blue-300, html:not(.dark) .text-blue-400, html:not(.dark) .hover\:text-blue-300:hover { color:#1d4ed8; }
+    html:not(.dark) .text-emerald-300, html:not(.dark) .text-emerald-400 { color:#047857; }
+    html:not(.dark) .text-amber-400 { color:#b45309; }
+    html:not(.dark) .bg-red-950\/30 { background-color:rgba(254,226,226,.7); }
+    html:not(.dark) .bg-blue-950\/30 { background-color:rgba(219,234,254,.7); }
+    html:not(.dark) .shadow-lg, html:not(.dark) .shadow-xl, html:not(.dark) .shadow-md { box-shadow:0 4px 14px rgba(15,23,42,.08); }
+    /* keep white text on solid coloured buttons */
+    html:not(.dark) .bg-blue-600, html:not(.dark) .bg-blue-500,
+    html:not(.dark) .bg-red-600, html:not(.dark) .bg-gradient-to-r { color:#ffffff; }
+    html:not(.dark) .custom-scrollbar::-webkit-scrollbar-track { background:#e2e8f0; }
+    html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb { background:#94a3b8; }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col transition-colors duration-200 custom-scrollbar">
@@ -85,8 +130,7 @@
       <div class="flex items-center space-x-3">
         <!-- Theme Switcher -->
         <button id="themeToggleBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition">
-          <i data-lucide="sun" id="themeIconSun" class="w-4 h-4 hidden"></i>
-          <i data-lucide="moon" id="themeIconMoon" class="w-4 h-4"></i>
+
         </button>
       </div>
 
@@ -149,9 +193,12 @@
 
     <!-- Step 3: Event detail -->
     <div id="eventDetail" class="hidden space-y-6">
-    <button id="backBtn" class="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition">
-      <i data-lucide="arrow-left" class="w-4 h-4"></i><span id="backLabel">Back to upcoming events</span>
-    </button>
+    <div class="flex items-center justify-between gap-3">
+      <button id="backBtn" class="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i><span id="backLabel">Back to upcoming events</span>
+      </button>
+      <span id="lastUpdated" class="text-xs text-slate-500 flex items-center gap-1.5"></span>
+    </div>
 
     <!-- Event Summary Dashboard Card -->
     <section id="eventSummaryCard" class="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 shadow-md relative overflow-hidden hidden">
@@ -319,6 +366,9 @@
       return followTokens.some(t => u === t || (/^\d+$/.test(t) && new RegExp('^' + t + '[A-Z]$').test(u)));
     };
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const dayBefore = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+    const evDay = (v) => String(v || '').slice(0, 10);
+    const isHappeningToday = (ev) => evDay(ev.start) <= todayISO() && todayISO() <= (evDay(ev.end) || evDay(ev.start));
     const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 
     const teamBase = (name) => String(name || '').toUpperCase().replace(/[A-Z]+$/, '');
@@ -384,6 +434,7 @@
       eventsList: document.getElementById('eventsList'),
       eventDetail: document.getElementById('eventDetail'),
       backBtn: document.getElementById('backBtn'),
+      lastUpdated: document.getElementById('lastUpdated'),
       backLabel: document.getElementById('backLabel'),
       teamFilterBar: document.getElementById('teamFilterBar'),
       eventSkuInput: document.getElementById('eventSkuInput'),
@@ -417,9 +468,7 @@
 
       matchSearchInput: document.getElementById('matchSearchInput'),
       statusSelect: document.getElementById('statusSelect'),
-      themeToggleBtn: document.getElementById('themeToggleBtn'),
-      themeIconSun: document.getElementById('themeIconSun'),
-      themeIconMoon: document.getElementById('themeIconMoon')
+      themeToggleBtn: document.getElementById('themeToggleBtn')
     };
 
     // --- Initialization ---
@@ -504,6 +553,7 @@
       try { localStorage.setItem('vex_teams', tokens.join(', ')); } catch (e) {}
       updateHeaderTeams();
       hideStatus();
+      stopAutoRefresh();
       elements.eventDetail.classList.add('hidden');
       elements.eventsSection.classList.add('hidden');
       elements.foundTeamsSection.classList.add('hidden');
@@ -529,13 +579,14 @@
           </span>`).join('');
         elements.foundTeamsSection.classList.remove('hidden');
 
-        const results = await Promise.allSettled(teams.map(t => apiAll(`/teams/${t.id}/events?start=${todayISO()}`)));
+        const results = await Promise.allSettled(teams.map(t => apiAll(`/teams/${t.id}/events?start=${dayBefore()}`)));
         if (results.every(r => r.status === 'rejected')) throw results[0].reason;
 
         const bySku = new Map();
         results.forEach((r, i) => {
           if (r.status !== 'fulfilled') return;
           r.value.forEach(ev => {
+            if ((evDay(ev.end) || evDay(ev.start)) < todayISO()) return;
             if (!bySku.has(ev.sku)) bySku.set(ev.sku, { ev, teams: [] });
             bySku.get(ev.sku).teams.push(teams[i].number);
           });
@@ -563,6 +614,7 @@
           <div class="space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">${esc(ev.program?.code || '')}</span>
+              ${isHappeningToday(ev) ? '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">Today</span>' : ''}
               <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i>${esc(formatDateRange(ev.start, ev.end))}</span>
             </div>
             <h4 class="text-base font-bold text-white leading-snug">${esc(ev.name)}</h4>
@@ -587,7 +639,53 @@
       lucide.createIcons();
     }
 
+    // --- Auto refresh (every 60 seconds) ---
+    const REFRESH_MS = 60000;
+    let refreshTimer = null;
+    let refreshing = false;
+    let lastRefreshAt = 0;
+
+    function stampUpdated(failed) {
+      const t = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
+      elements.lastUpdated.innerHTML = failed
+        ? `<span class="text-amber-400">Update failed, retrying in 1 min</span>`
+        : `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>Live · updated ${t}`;
+    }
+
+    async function refreshNow() {
+      if (refreshing || !state.currentSku || elements.eventDetail.classList.contains('hidden')) return;
+      refreshing = true;
+      try {
+        await fetchFromLiveApi(state.currentSku, true);
+        lastRefreshAt = Date.now();
+        stampUpdated(false);
+      } catch (err) {
+        console.error(err);
+        stampUpdated(true);
+      } finally {
+        refreshing = false;
+      }
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      lastRefreshAt = Date.now();
+      stampUpdated(false);
+      refreshTimer = setInterval(() => { if (!document.hidden) refreshNow(); }, REFRESH_MS);
+    }
+
+    function stopAutoRefresh() {
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = null;
+      elements.lastUpdated.textContent = '';
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && refreshTimer && Date.now() - lastRefreshAt >= REFRESH_MS) refreshNow();
+    });
+
     function backToEvents() {
+      stopAutoRefresh();
       elements.eventDetail.classList.add('hidden');
       if (elements.eventsList.children.length) elements.eventsSection.classList.remove('hidden');
       if (elements.foundTeams.children.length) elements.foundTeamsSection.classList.remove('hidden');
@@ -601,6 +699,7 @@
 
       try {
         await fetchFromLiveApi(sku);
+        startAutoRefresh();
       } catch (err) {
         console.error(err);
         showStatus(`Failed to fetch event data: ${err.message}`, 'error');
@@ -609,7 +708,7 @@
       }
     }
 
-    async function fetchFromLiveApi(sku) {
+    async function fetchFromLiveApi(sku, silent = false) {
       if (!state.apiKey) {
         throw new Error('API token is missing from the page.');
       }
@@ -718,12 +817,11 @@
         matches: formattedMatches
       };
 
-      processEventData(liveData);
-      showStatus(`Loaded live matches for ${sku}`, 'success');
+      processEventData(liveData, silent);
     }
 
     // --- Process & Render Pipeline ---
-    function processEventData(data) {
+    function processEventData(data, silent = false) {
       state.eventData = data;
       state.matches = data.matches || [];
       state.standings = data.teams || [];
@@ -733,10 +831,12 @@
       if (state.teamFilter !== 'all' && !state.eventTeams.some(t => matchesTeamFilter(t, state.teamFilter))) state.teamFilter = 'all';
       renderTeamFilters();
       elements.backLabel.textContent = elements.eventsList.children.length ? 'Back to upcoming events' : 'Back to top';
-      elements.eventDetail.classList.remove('hidden');
-      elements.eventsSection.classList.add('hidden');
-      elements.foundTeamsSection.classList.add('hidden');
-      elements.eventDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!silent) {
+        elements.eventDetail.classList.remove('hidden');
+        elements.eventsSection.classList.add('hidden');
+        elements.foundTeamsSection.classList.add('hidden');
+        elements.eventDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
 
       // Update Header Info
       elements.eventName.textContent = data.name || 'VEX Robotics Tournament';
@@ -1009,20 +1109,24 @@
     }
 
     // --- Theme Management ---
+    function updateThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      elements.themeToggleBtn.innerHTML = `<i data-lucide="${isDark ? 'moon' : 'sun'}" class="w-4 h-4"></i>`;
+      elements.themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      lucide.createIcons();
+    }
+
     function initTheme() {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
-        elements.themeIconSun.classList.remove('hidden');
-        elements.themeIconMoon.classList.add('hidden');
-      }
+      let saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) {}
+      document.documentElement.classList.toggle('dark', saved !== 'light');
+      updateThemeIcon();
     }
 
     function toggleTheme() {
       const isDark = document.documentElement.classList.toggle('dark');
-      localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      elements.themeIconSun.classList.toggle('hidden', isDark);
-      elements.themeIconMoon.classList.toggle('hidden', !isDark);
+      try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      updateThemeIcon();
     }
   </script>
 </body>
