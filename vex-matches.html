@@ -787,9 +787,8 @@
           : (a.round - b.round) || (a.instance - b.instance) || (a.matchnum - b.matchnum);
       };
       const ordered = [...allMatches].sort(evOrder);
-      let lastScored = -1;
-      ordered.forEach((m, i) => { if (isScoredMatch(m)) lastScored = i; });
-      const currentIdx = ordered.findIndex((m, i) => !isScoredMatch(m) && i > lastScored);
+      // Current match = the first match in the schedule that has no score yet.
+      const currentIdx = ordered.findIndex(m => !isScoredMatch(m));
       const idxById = new Map(ordered.map((m, i) => [m.id, i]));
       const eventCurrent = currentIdx >= 0
         ? { name: ordered[currentIdx].name || `Match ${ordered[currentIdx].matchnum}`, field: ordered[currentIdx].field || '', started: !!ordered[currentIdx].started }
@@ -1038,9 +1037,12 @@
     function renderStandings() {
       elements.standingsTableBody.innerHTML = '';
 
-      const filtered = state.standings.filter(t => {
-        return matchesTeamFilter(t.team, state.teamFilter);
-      });
+      const filtered = state.standings
+        .filter(t => matchesTeamFilter(t.team, state.teamFilter))
+        .sort((a, b) => {
+          const ra = a.rank > 0 ? a.rank : Infinity, rb = b.rank > 0 ? b.rank : Infinity;
+          return ra === rb ? String(a.team).localeCompare(String(b.team)) : ra - rb;
+        });
 
       if (filtered.length === 0) {
         elements.standingsTableBody.innerHTML = `
