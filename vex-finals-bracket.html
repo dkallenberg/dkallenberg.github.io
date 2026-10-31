@@ -223,7 +223,10 @@
       const loaded = [];
       for (const d of divs) {
         const matches = await apiAll(`/events/${event.id}/divisions/${d.id}/matches`);
-        loaded.push({ id: d.id, name: d.name || `Division ${d.id}`, matches });
+        const rankRows = await apiAll(`/events/${event.id}/divisions/${d.id}/rankings`).catch(() => []);
+        const ranks = new Map();
+        rankRows.forEach(r => { const n = (r.team?.name || '').toUpperCase(); if (n && r.rank) ranks.set(n, r.rank); });
+        loaded.push({ id: d.id, name: d.name || `Division ${d.id}`, matches, ranks });
       }
       eventInfo = event;
       divisions = loaded;
@@ -244,7 +247,7 @@
     };
     const teamNames = (a) => (a?.teams || []).map(t => t.team?.name).filter(Boolean);
 
-    function buildSeries(matches) {
+    function buildSeries(matches, ranks = new Map()) {
       const elim = matches.filter(m => ROUND_ORDER.includes(m.round));
       const groups = new Map();
       elim.forEach(m => {
@@ -272,6 +275,13 @@
           if (scored) { if (sa > sb) sideA.wins++; else if (sb > sa) sideB.wins++; }
           return { m, scored, sa, sb, label: m.matchnum };
         });
+        // Alliance rank = best qualification rank among its teams (the alliance captain)
+        const allianceRank = (teams) => {
+          const rs = teams.map(n => ranks.get(String(n).toUpperCase())).filter(Boolean);
+          return rs.length ? Math.min(...rs) : null;
+        };
+        sideA.rank = allianceRank(sideA.teams);
+        sideB.rank = allianceRank(sideB.teams);
         const round = first.round;
         const needed = round === 5 ? 2 : 1;
         const winner = sideA.wins >= needed ? 'A' : sideB.wins >= needed ? 'B' : null;
@@ -291,7 +301,7 @@
         <button data-div="${d.id}" class="div-tab text-xs font-semibold px-3.5 py-1.5 rounded-lg transition ${d.id === activeDiv ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}">${esc(d.name)}</button>`).join('') : '';
       document.querySelectorAll('.div-tab').forEach(b => b.addEventListener('click', () => { activeDiv = Number(b.dataset.div) || b.dataset.div; render(); }));
 
-      const series = buildSeries(div.matches);
+      const series = buildSeries(div.matches, div.ranks);
       $('bracketWrap').classList.remove('hidden');
       if (!series.length) {
         $('bracket').innerHTML = '<p class="text-sm text-slate-400 py-6 px-2">No elimination matches are posted for this division yet. The bracket appears after alliance selection.</p>';
@@ -323,9 +333,11 @@
         ? side.teams.map(n => isFollowed(n) ? `<span class="px-1 rounded bg-amber-500/20 text-amber-400 font-bold">${esc(n)}</span>` : esc(n)).join(', ')
         : '<span class="text-slate-500 italic">TBD</span>';
       const num = showWins ? wins : (lastScore ?? '');
+      const rankTag = (side.rank && side.teams.length)
+        ? `<span class="inline-block mr-1.5 px-1.5 py-0.5 rounded bg-slate-700 text-slate-200 text-[10px] font-bold align-middle" title="Alliance rank">#${side.rank}</span>` : '';
       return `
         <div class="flex items-center justify-between gap-2 px-3 py-2 ${isWinner ? 'bg-emerald-500/10' : ''} ${hasWinner && !isWinner ? 'opacity-60' : ''}">
-          <div class="text-xs ${isWinner ? 'font-bold text-white' : 'text-slate-200'} leading-snug">${names}</div>
+          <div class="text-xs ${isWinner ? 'font-bold text-white' : 'text-slate-200'} leading-snug">${rankTag}${names}</div>
           <div class="text-sm font-extrabold tabular-nums ${isWinner ? 'text-emerald-400' : 'text-slate-300'}">${num}</div>
         </div>`;
     }

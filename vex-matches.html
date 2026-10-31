@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VEX Team Match Tracker</title>
+  <title>VEX Finals Bracket</title>
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -93,7 +93,7 @@
     html:not(.dark) .text-red-300, html:not(.dark) .text-red-400, html:not(.dark) .text-red-500 { color:#b91c1c; }
     html:not(.dark) .text-blue-300, html:not(.dark) .text-blue-400, html:not(.dark) .hover\:text-blue-300:hover { color:#1d4ed8; }
     html:not(.dark) .text-emerald-300, html:not(.dark) .text-emerald-400 { color:#047857; }
-    html:not(.dark) .text-amber-400, html:not(.dark) .hover\:text-amber-300:hover { color:#b45309; }
+    html:not(.dark) .text-amber-400 { color:#b45309; }
     html:not(.dark) .text-blue-400 { color:#1d4ed8; }
     html:not(.dark) .bg-red-950\/30 { background-color:rgba(254,226,226,.7); }
     html:not(.dark) .bg-blue-950\/30 { background-color:rgba(219,234,254,.7); }
@@ -107,334 +107,93 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col transition-colors duration-200 custom-scrollbar">
 
-  <!-- Header Header / Navigation -->
   <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-      
-      <!-- Brand Logo -->
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 via-purple-600 to-blue-600 p-0.5 shadow-lg shadow-red-900/20">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 via-purple-600 to-blue-600 p-0.5 shadow-lg">
           <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-            <i data-lucide="bot" class="w-5 h-5 text-red-500"></i>
+            <i data-lucide="trophy" class="w-5 h-5 text-red-500"></i>
           </div>
         </div>
         <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-extrabold text-lg tracking-tight text-white">VEX TRACKER</h1>
-            <span id="headerTeams" class="bg-red-500/10 text-red-400 border border-red-500/20 text-xs px-2 py-0.5 rounded-full font-semibold">Pick your teams</span>
-          </div>
-          <p class="text-xs text-slate-400">Match Schedule & Performance Center</p>
+          <h1 class="font-extrabold text-lg tracking-tight text-white">VEX FINALS BRACKET</h1>
+          <p class="text-xs text-slate-400">Elimination rounds, live</p>
         </div>
       </div>
-
-      <!-- Quick Action Controls -->
       <div class="flex items-center space-x-3">
-        <!-- Theme Switcher -->
-        <button id="themeToggleBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition">
-
-        </button>
+        <a id="backLink" href="vex.matches.html" class="text-xs text-slate-400 hover:text-white transition flex items-center gap-1.5">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i><span>Match tracker</span>
+        </a>
+        <button id="themeToggleBtn" class="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition"></button>
       </div>
-
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-5">
 
-    <!-- Step 1: Team numbers -->
-    <section id="teamStep" class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-6 shadow-xl backdrop-blur-md space-y-4">
-      <div>
-        <h2 class="text-lg font-bold text-white">Which teams do you want to follow?</h2>
-        <p class="text-xs text-slate-400 mt-1">Enter one or more team numbers, separated by commas. A number without a letter, like 586, includes every team that starts with it (586A, 586B, and so on).</p>
+    <section class="bg-slate-800/80 border border-slate-700/70 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-2">
+        <input id="skuInput" type="text" placeholder="Event code, e.g. RE-V5RC-26-4480" autocomplete="off" spellcheck="false"
+          class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase tracking-wide" />
+        <input id="teamsInput" type="text" placeholder="Highlight teams, e.g. 586, 587 (optional)" autocomplete="off" spellcheck="false"
+          class="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase tracking-wide" />
+        <button id="loadBtn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl transition text-sm">Show bracket</button>
       </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <div class="relative flex-1">
-          <i data-lucide="users" class="w-4 h-4 text-slate-500 absolute left-3.5 top-3.5"></i>
-          <input id="teamInput" type="text" placeholder="e.g. 586, 587 or 586A, 587B" autocomplete="off" spellcheck="false"
-            class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase tracking-wide transition" />
+    </section>
+
+    <div id="statusMsg" class="hidden rounded-xl p-4 border text-sm"></div>
+
+    <div id="bracketWrap" class="hidden space-y-4">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="eventName" class="text-xl font-bold text-white"></h2>
+          <p id="eventMeta" class="text-xs text-slate-400 mt-0.5"></p>
         </div>
-        <button id="findEventsBtn" class="bg-gradient-to-r from-red-600 to-blue-600 hover:from-red-500 hover:to-blue-500 text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg transition flex items-center justify-center space-x-2 text-sm min-w-[190px]">
-          <i data-lucide="calendar-search" id="findIcon" class="w-4 h-4"></i>
-          <span>Find upcoming events</span>
-        </button>
-      </div>
-
-      <details class="text-xs text-slate-400">
-        <summary class="cursor-pointer hover:text-slate-200 w-fit">Already have an event code?</summary>
-        <div class="flex flex-col sm:flex-row gap-2 mt-3">
-          <input id="eventSkuInput" type="text" placeholder="e.g. RE-V5RC-26-4480"
-            class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 uppercase tracking-wide transition" />
-          <button id="fetchDataBtn" class="bg-slate-700 hover:bg-slate-600 text-white font-semibold px-5 py-2.5 rounded-xl transition flex items-center justify-center space-x-2 text-sm min-w-[130px]">
-            <i data-lucide="refresh-cw" id="fetchIcon" class="w-4 h-4"></i>
-            <span>Fetch Matches</span>
-          </button>
-        </div>
-      </details>
-    </section>
-
-    <!-- Alert / Status Banner -->
-    <div id="statusMessage" class="hidden rounded-xl p-4 border text-sm flex items-start space-x-3 transition-all duration-300">
-      <i id="statusIcon" data-lucide="info" class="w-5 h-5 flex-shrink-0 mt-0.5"></i>
-      <div id="statusContent" class="flex-1"></div>
-    </div>
-
-    <!-- Step 2: Teams found + upcoming events -->
-    <section id="foundTeamsSection" class="hidden space-y-2">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Teams found</h3>
-        <button id="changeTeamsBtn" class="text-xs text-blue-400 hover:text-blue-300 transition">Change teams</button>
-      </div>
-      <div id="foundTeams" class="flex flex-wrap gap-2"></div>
-    </section>
-
-    <section id="eventsSection" class="hidden space-y-3">
-      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">Upcoming events</h3>
-      <div id="eventsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </section>
-
-    <!-- Step 3: Event detail -->
-    <div id="eventDetail" class="hidden space-y-6">
-    <div class="flex items-center justify-between gap-3">
-      <button id="backBtn" class="flex items-center space-x-1.5 text-xs text-slate-400 hover:text-white transition">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i><span id="backLabel">Back to upcoming events</span>
-      </button>
-      <div class="flex items-center gap-4">
-        <a id="bracketLink" href="vex-finals-bracket.html" target="_blank" rel="noopener" class="text-xs font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition">
-          <i data-lucide="trophy" class="w-4 h-4"></i><span>Finals bracket</span>
-        </a>
         <span id="lastUpdated" class="text-xs text-slate-500 flex items-center gap-1.5"></span>
       </div>
-    </div>
-
-    <!-- Event Summary Dashboard Card -->
-    <section id="eventSummaryCard" class="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 shadow-md relative overflow-hidden hidden">
-      <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-gradient-to-br from-red-600/10 to-blue-600/10 rounded-full blur-2xl pointer-events-none"></div>
-
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-        <!-- Event Name & Info -->
-        <div class="space-y-2 max-w-3xl">
-          <div class="flex flex-wrap items-center gap-2">
-            <span id="eventProgramBadge" class="bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">VRC</span>
-            <span id="eventSkuBadge" class="bg-slate-900 text-slate-400 font-mono text-xs px-2.5 py-0.5 rounded-md border border-slate-700">SKU</span>
-            <span id="eventDateBadge" class="text-xs text-slate-400 flex items-center gap-1">
-              <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i> <span id="eventDate">--</span>
-            </span>
-          </div>
-
-          <h2 id="eventName" class="text-xl sm:text-2xl font-bold text-white tracking-tight">Select an Event SKU to Load Matches</h2>
-
-          <div class="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-300">
-            <span class="flex items-center gap-1.5" id="eventLocationWrapper">
-              <i data-lucide="map-pin" class="w-3.5 h-3.5 text-red-400"></i> <span id="eventLocation">--</span>
-            </span>
-            <span class="flex items-center gap-1.5" id="eventVenueWrapper">
-              <i data-lucide="building" class="w-3.5 h-3.5 text-blue-400"></i> <span id="eventVenue">--</span>
-            </span>
-          </div>
-        </div>
-
-        <!-- Quick Summary Stats Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 min-w-[280px]">
-          <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-center">
-            <div class="text-[11px] font-medium text-slate-400 uppercase">Your Teams</div>
-            <div id="statTotalTeams" class="text-xl font-black text-white mt-0.5">0</div>
-          </div>
-          <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-center">
-            <div class="text-[11px] font-medium text-slate-400 uppercase">Total Matches</div>
-            <div id="statTotalMatches" class="text-xl font-black text-white mt-0.5">0</div>
-          </div>
-          <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-center">
-            <div class="text-[11px] font-medium text-slate-400 uppercase">Completed</div>
-            <div id="statCompletedMatches" class="text-xl font-black text-emerald-400 mt-0.5">0</div>
-          </div>
-          <div class="bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-center">
-            <div class="text-[11px] font-medium text-slate-400 uppercase">Avg Win Rate</div>
-            <div id="statAvgWinRate" class="text-xl font-black text-blue-400 mt-0.5">0%</div>
-          </div>
-        </div>
+      <div id="divTabs" class="flex flex-wrap gap-1.5"></div>
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl overflow-x-auto custom-scrollbar">
+        <div id="bracket" class="flex gap-6 min-w-max"></div>
       </div>
-    </section>
-
-    <!-- Filtering & Tab Navigation Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-3">
-      
-      <!-- Team Specific Filter Tags -->
-      <div id="teamFilterBar" class="flex flex-wrap items-center gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800 w-fit"></div>
-
-      <!-- Tab Switcher (Matches vs Standings) -->
-      <div class="flex items-center space-x-2">
-        <button id="tabMatchesBtn" class="tab-btn bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-900/20">
-          <i data-lucide="list-ordered" class="w-4 h-4"></i>
-          <span>Matches Schedule</span>
-        </button>
-        <button id="tabStandingsBtn" class="tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition">
-          <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-          <span>Standings & Stats</span>
-        </button>
-        <button id="tabSkillsBtn" class="tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition">
-          <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i>
-          <span>Skills Rankings</span>
-        </button>
-      </div>
-
-    </div>
-
-    <!-- Match Search & Additional Filters -->
-    <div id="matchControls" class="flex flex-col sm:flex-row items-center justify-between gap-3">
-      <!-- Search Input -->
-      <div class="relative w-full sm:w-72">
-        <i data-lucide="search" class="w-4 h-4 text-slate-500 absolute left-3 top-2.5"></i>
-        <input 
-          type="text" 
-          id="matchSearchInput" 
-          placeholder="Search match #, sub-team, field..." 
-          class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-        />
-      </div>
-
-      <!-- Status Filter dropdown -->
-      <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
-        <label class="text-xs text-slate-400">Status:</label>
-        <select id="statusSelect" class="bg-slate-800 border border-slate-700 rounded-xl text-xs text-white px-3 py-1.5 focus:outline-none">
-          <option value="all">All Matches</option>
-          <option value="completed">Completed Only</option>
-          <option value="upcoming">Upcoming / Scheduled</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- MAIN CONTENT VIEW: MATCH SCHEDULE -->
-    <div id="matchesView" class="space-y-4">
-      <div id="currentBanner" class="hidden"></div>
-      <div id="matchesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Match Cards Rendered Dynamically -->
-      </div>
-      
-      <!-- Empty State -->
-      <div id="emptyMatchesState" class="hidden bg-slate-800/40 border border-slate-800 rounded-2xl p-12 text-center space-y-3">
-        <div class="w-12 h-12 bg-slate-800 text-slate-500 rounded-full flex items-center justify-center mx-auto">
-          <i data-lucide="calendar-x" class="w-6 h-6"></i>
-        </div>
-        <h4 class="text-base font-semibold text-slate-300">No Matches Found</h4>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto">
-          No matches matched your current filter criteria or team selection. Try resetting filters or switching the SKU.
-        </p>
-      </div>
-    </div>
-
-    <!-- MAIN CONTENT VIEW: TEAM STANDINGS & RANKINGS -->
-    <div id="standingsView" class="hidden space-y-4">
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-900/80 border-b border-slate-700 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <th class="py-3 px-4 text-center">Rank</th>
-                <th class="py-3 px-4">Team</th>
-                <th class="py-3 px-4">Team Name / Organization</th>
-                <th class="py-3 px-4 text-center">W - L - T</th>
-                <th class="py-3 px-4 text-center">Win %</th>
-                <th class="py-3 px-4 text-center">WP</th>
-                <th class="py-3 px-4 text-center">AP</th>
-                <th class="py-3 px-4 text-center">SP</th>
-                <th class="py-3 px-4 text-center">High Score</th>
-              </tr>
-            </thead>
-            <tbody id="standingsTableBody" class="divide-y divide-slate-700/60 text-xs font-medium">
-              <!-- Standings Data Rendered Here -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- MAIN CONTENT VIEW: ROBOT SKILLS RANKINGS -->
-    <div id="skillsView" class="hidden space-y-3">
-      <p id="skillsNote" class="text-xs text-slate-400"></p>
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-900/80 border-b border-slate-700 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                <th class="py-3 px-4 text-center">Skills Rank</th>
-                <th class="py-3 px-4">Team</th>
-                <th class="py-3 px-4 text-center">Total</th>
-                <th class="py-3 px-4 text-center">Driver</th>
-                <th class="py-3 px-4 text-center">Driver Rank</th>
-                <th class="py-3 px-4 text-center">Programming</th>
-                <th class="py-3 px-4 text-center">Prog. Rank</th>
-              </tr>
-            </thead>
-            <tbody id="skillsTableBody" class="divide-y divide-slate-700/60 text-xs font-medium"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800 bg-slate-900 py-6 mt-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-      <div class="flex items-center space-x-2">
-        <i data-lucide="cpu" class="w-4 h-4 text-slate-400"></i>
-        <span>VEX Team Live Match Monitor</span>
-      </div>
-      <div>
-        <span>Data source: events.vex.com</span>
-      </div>
-    </div>
-  </footer>
+  <footer class="border-t border-slate-800 bg-slate-900 py-5 mt-8 text-xs text-slate-500 text-center">Data source: events.vex.com</footer>
 
-  <!-- Application Logic -->
   <script>
-    // --- Provided Bearer Token ---
     const DEFAULT_BEARER_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzIiwianRpIjoiNzMzODkyNTBjNjA3MTg1NGI1YTA4Njg5MDNmYTkwMmM2MjM3YjBkYTQzZmNmODQzOTc0MjA5NmM5MmE3MzcwNGExZmI2ZmE0YWNmZjUyYmYiLCJpYXQiOjE3OTM0MDYzOTIuMzYxMjYwOSwibmJmIjoxNzkzNDA2MzkyLjM2MTI2MywiZXhwIjoyNzQwMTc3NTkyLjM1NjY5MjgsInN1YiI6IjEyMzUzOSIsInNjb3BlcyI6W119.BZpXY1KL9WZHW_O-igw3qa1d4gBhW0efci3RfeCH5eHf_66T1zYQx0uuhBjpmRjFPBaEu2V_8bR0wQs4H7j1cb4oz3_Vwd_zle8VWBcdL7ScjfGL1rF69Mpv8W8Tja1RH6Pe3Hus3RHlf-MN4Kh1osLJSu-kIsKaPpZBIwtFTVPHGK7L5V7d0j9Nr5AHudovAiSYk8Xzl8kM7F1OhkpwrsyBeK59XzaLu5VeKWt0gKtBj444U53YJlMuxqdu7g2mO5ZssXZJHLhBwY1pfXxMu8V-Pt_vvlmNF1YqXpMLx8AhrVhhwlVCnH2VrPsu4xqTKi431Lld3WcQTsJZvQbdZbU5B7gfMTgE0HoWjkTXZDjzJI8mhD8UmQG1DyRpiLmtIL5lBcIyoKntfhR8uvdnlEG1u6LnUN2kaTg6amUAUDMAT5KI7iRd4C-6jIiIIB_Yo3R8D_no-Sqmg3UixFwyqC7W1dRi18X1NYgEMtxEwvPjc1r_0RS3HLy3oHah0-FFj5FpXYu0oZ1SgyZaZYCR5mqiIHwG7kfgYrn5c2SSFLqgzs6eZRTZ8F1qirWBe83oMZYw1wACP3rK4yHXT5aWUPDEprnQBbmBGyU8bgLczJU48SlF9Yxc7G0bEhvXjjKd04iMiuIkLxpalniq-m-aqgII86qNsyjogWECWspRrSo";
-
     const API_BASE = 'https://events.vex.com/api/v2';
-    let followTokens = [];
-    const parseTeamInput = (str) => [...new Set(String(str || '').toUpperCase().split(/[\s,;]+/).map(x => x.trim()).filter(Boolean))];
-    const isTargetTeam = (n) => {
-      const u = (n || '').trim().toUpperCase();
-      return followTokens.some(t => u === t || (/^\d+$/.test(t) && new RegExp('^' + t + '[A-Z]$').test(u)));
-    };
+    const ROUND_NAMES = { 9: 'Round of 128', 8: 'Round of 64', 7: 'Round of 32', 6: 'Round of 16', 3: 'Quarterfinals', 4: 'Semifinals', 5: 'Finals' };
+    const ROUND_SHORT = { 9: 'R128', 8: 'R64', 7: 'R32', 6: 'R16', 3: 'QF', 4: 'SF', 5: 'F' };
+    const ROUND_ORDER = [9, 8, 7, 6, 3, 4, 5];
+    const REFRESH_MS = 60000;
+
+    const $ = (id) => document.getElementById(id);
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const dayBefore = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
-    const evDay = (v) => String(v || '').slice(0, 10);
-    const isHappeningToday = (ev) => evDay(ev.start) <= todayISO() && todayISO() <= (evDay(ev.end) || evDay(ev.start));
-    const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+    const parseTeams = (str) => [...new Set(String(str || '').toUpperCase().split(/[\s,;]+/).map(x => x.trim()).filter(Boolean))];
 
-    // A match counts as played if the API flags it scored, or it carries real alliance scores.
-    const isScoredMatch = (m) => {
-      if (m.scored === true) return true;
-      const r = (m.alliances || []).find(a => a.color === 'red');
-      const b = (m.alliances || []).find(a => a.color === 'blue');
-      const rs = Number(r?.score), bs = Number(b?.score);
-      return Number.isFinite(rs) && Number.isFinite(bs) && (rs + bs) > 0;
-    };
-    const teamBase = (name) => String(name || '').toUpperCase().replace(/[A-Z]+$/, '');
-    const matchesTeamFilter = (name, f) => {
-      if (f === 'all') return true;
-      const u = String(name || '').toUpperCase();
-      return f.startsWith('group:') ? teamBase(u) === f.slice(6) : u === f;
+    let follow = [];
+    let divisions = [];        // [{id, name, matches:[]}]
+    let activeDiv = null;
+    let eventInfo = null;
+    let timer = null, busy = false, currentSku = '';
+
+    const isFollowed = (n) => {
+      const u = String(n || '').toUpperCase();
+      return follow.some(t => u === t || (/^\d+$/.test(t) && new RegExp('^' + t + '[A-Z]$').test(u)));
     };
 
+    // ---------- API ----------
     async function apiGet(path) {
-      const token = (state.apiKey || '').trim();
-      if (!token) throw new Error('API token is missing from the page.');
       let res;
       try {
-        res = await fetch(API_BASE + path, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
-      } catch (err) {
-        throw new Error('Could not reach events.vex.com. Check your connection and open this file directly from your computer.');
-      }
+        res = await fetch(API_BASE + path, { headers: { 'Authorization': `Bearer ${DEFAULT_BEARER_TOKEN}`, 'Accept': 'application/json' } });
+      } catch (e) { throw new Error('Could not reach events.vex.com. Check your connection and open this file directly from your computer.'); }
       if (res.status === 401 || res.status === 403) throw new Error('The API rejected the token built into this page.');
       if (res.status === 429) throw new Error('Too many requests. Wait a minute and try again.');
       if (!res.ok) throw new Error(`events.vex.com returned an error (${res.status}).`);
       return res.json();
     }
-
     async function apiAll(path) {
       let page = 1, last = 1, rows = [];
       do {
@@ -446,849 +205,221 @@
       return rows;
     }
 
-    // --- State Management ---
-    const state = {
-      apiKey: DEFAULT_BEARER_TOKEN,
-      currentSku: '',
-      eventTeams: [],
-      fromList: false,
-      teamFilter: 'all', // 'all', '586', '587'
-      activeTab: 'matches', // 'matches', 'standings'
-      matchSearchQuery: '',
-      statusFilter: 'all',
-      eventData: null,
-      matches: [],
-      standings: [],
-      isLoading: false
+    // ---------- Status ----------
+    function showStatus(msg, type = 'info') {
+      const el = $('statusMsg');
+      el.textContent = msg;
+      el.className = 'rounded-xl p-4 border text-sm ' + (type === 'error'
+        ? 'bg-red-500/10 border-red-500/30 text-red-300' : 'bg-blue-500/10 border-blue-500/30 text-blue-300');
+    }
+    const hideStatus = () => $('statusMsg').className = 'hidden';
+
+    // ---------- Load ----------
+    async function load(sku, silent = false) {
+      const ev = await apiGet(`/events?sku%5B%5D=${encodeURIComponent(sku)}`);
+      if (!ev.data || !ev.data.length) throw new Error(`No event found with code ${sku}.`);
+      const event = ev.data[0];
+      const divs = (event.divisions && event.divisions.length) ? event.divisions : [{ id: 1, name: 'Division 1' }];
+      const loaded = [];
+      for (const d of divs) {
+        const matches = await apiAll(`/events/${event.id}/divisions/${d.id}/matches`);
+        const rankRows = await apiAll(`/events/${event.id}/divisions/${d.id}/rankings`).catch(() => []);
+        const ranks = new Map();
+        rankRows.forEach(r => { const n = (r.team?.name || '').toUpperCase(); if (n && r.rank) ranks.set(n, r.rank); });
+        loaded.push({ id: d.id, name: d.name || `Division ${d.id}`, matches, ranks });
+      }
+      eventInfo = event;
+      divisions = loaded;
+      if (!activeDiv || !divisions.some(d => d.id === activeDiv)) {
+        // default to the division with the most elimination matches
+        const count = (d) => d.matches.filter(m => ROUND_ORDER.includes(m.round)).length;
+        activeDiv = [...divisions].sort((a, b) => count(b) - count(a))[0].id;
+      }
+      render();
+    }
+
+    // ---------- Bracket model ----------
+    const isScored = (m) => {
+      if (m.scored === true) return true;
+      const r = (m.alliances || []).find(a => a.color === 'red'), b = (m.alliances || []).find(a => a.color === 'blue');
+      const rs = Number(r?.score), bs = Number(b?.score);
+      return Number.isFinite(rs) && Number.isFinite(bs) && (rs + bs) > 0;
     };
+    const teamNames = (a) => (a?.teams || []).map(t => t.team?.name).filter(Boolean);
 
-    // --- DOM Elements ---
-    const elements = {
-      teamStep: document.getElementById('teamStep'),
-      changeTeamsBtn: document.getElementById('changeTeamsBtn'),
-      teamInput: document.getElementById('teamInput'),
-      findEventsBtn: document.getElementById('findEventsBtn'),
-      findIcon: document.getElementById('findIcon'),
-      headerTeams: document.getElementById('headerTeams'),
-      foundTeamsSection: document.getElementById('foundTeamsSection'),
-      foundTeams: document.getElementById('foundTeams'),
-      eventsSection: document.getElementById('eventsSection'),
-      eventsList: document.getElementById('eventsList'),
-      eventDetail: document.getElementById('eventDetail'),
-      backBtn: document.getElementById('backBtn'),
-      lastUpdated: document.getElementById('lastUpdated'),
-      bracketLink: document.getElementById('bracketLink'),
-      backLabel: document.getElementById('backLabel'),
-      teamFilterBar: document.getElementById('teamFilterBar'),
-      eventSkuInput: document.getElementById('eventSkuInput'),
-      fetchDataBtn: document.getElementById('fetchDataBtn'),
-      fetchIcon: document.getElementById('fetchIcon'),
-      
-      statusMessage: document.getElementById('statusMessage'),
-      statusIcon: document.getElementById('statusIcon'),
-      statusContent: document.getElementById('statusContent'),
-
-      eventSummaryCard: document.getElementById('eventSummaryCard'),
-      eventName: document.getElementById('eventName'),
-      eventSkuBadge: document.getElementById('eventSkuBadge'),
-      eventProgramBadge: document.getElementById('eventProgramBadge'),
-      eventDate: document.getElementById('eventDate'),
-      eventLocation: document.getElementById('eventLocation'),
-      eventVenue: document.getElementById('eventVenue'),
-      statTotalTeams: document.getElementById('statTotalTeams'),
-      statTotalMatches: document.getElementById('statTotalMatches'),
-      statCompletedMatches: document.getElementById('statCompletedMatches'),
-      statAvgWinRate: document.getElementById('statAvgWinRate'),
-
-
-      tabMatchesBtn: document.getElementById('tabMatchesBtn'),
-      tabStandingsBtn: document.getElementById('tabStandingsBtn'),
-      tabSkillsBtn: document.getElementById('tabSkillsBtn'),
-      skillsView: document.getElementById('skillsView'),
-      skillsNote: document.getElementById('skillsNote'),
-      skillsTableBody: document.getElementById('skillsTableBody'),
-      matchesView: document.getElementById('matchesView'),
-      standingsView: document.getElementById('standingsView'),
-      matchesContainer: document.getElementById('matchesContainer'),
-      currentBanner: document.getElementById('currentBanner'),
-      emptyMatchesState: document.getElementById('emptyMatchesState'),
-      standingsTableBody: document.getElementById('standingsTableBody'),
-
-      matchSearchInput: document.getElementById('matchSearchInput'),
-      statusSelect: document.getElementById('statusSelect'),
-      themeToggleBtn: document.getElementById('themeToggleBtn')
-    };
-
-    // --- Initialization ---
-    document.addEventListener('DOMContentLoaded', () => {
-      lucide.createIcons();
-      initTheme();
-      
-      try { elements.teamInput.value = localStorage.getItem('vex_teams') || ''; } catch (e) {}
-      const qp = new URLSearchParams(location.search);
-      if (qp.get('teams')) elements.teamInput.value = qp.get('teams');
-      updateHeaderTeams();
-      elements.findEventsBtn.addEventListener('click', handleFindEvents);
-      elements.teamInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleFindEvents(); });
-      elements.backBtn.addEventListener('click', backToEvents);
-      elements.changeTeamsBtn.addEventListener('click', () => {
-        elements.teamStep.classList.remove('hidden');
-        elements.eventsSection.classList.add('hidden');
-        elements.foundTeamsSection.classList.add('hidden');
-        hideStatus();
-        elements.teamInput.focus();
-      });
-
-      // Event Listeners
-      elements.fetchDataBtn.addEventListener('click', handleFetchClick);
-      elements.eventSkuInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') handleFetchClick();
-      });
-
-      document.querySelectorAll('.preset-sku').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          elements.eventSkuInput.value = e.target.textContent.trim();
-          handleFetchClick();
-        });
-      });
-
-      // Tab Switchers
-      elements.tabMatchesBtn.addEventListener('click', () => setActiveTab('matches'));
-      elements.tabStandingsBtn.addEventListener('click', () => setActiveTab('standings'));
-      elements.tabSkillsBtn.addEventListener('click', () => setActiveTab('skills'));
-
-      // Search and Status Filters
-      elements.matchSearchInput.addEventListener('input', (e) => {
-        state.matchSearchQuery = e.target.value.toLowerCase();
-        renderMatches();
-      });
-
-      elements.statusSelect.addEventListener('change', (e) => {
-        state.statusFilter = e.target.value;
-        renderMatches();
-      });
-
-      // Theme Toggle
-      elements.themeToggleBtn.addEventListener('click', toggleTheme);
-    });
-
-    // --- API & Data Handling ---
-    async function handleFetchClick() {
-      const sku = elements.eventSkuInput.value.trim().toUpperCase();
-      if (!sku) {
-        showStatus('Please enter a valid VEX Event SKU (e.g. RE-VRC-24-5867).', 'error');
-        return;
-      }
-      const tokens = parseTeamInput(elements.teamInput.value);
-      if (!tokens.length) {
-        showStatus('Enter your team numbers first so the matches can be filtered.', 'error');
-        elements.teamInput.focus();
-        return;
-      }
-      followTokens = tokens;
-      updateHeaderTeams();
-      state.currentSku = sku;
-      state.fromList = false;
-      fetchEventData(sku);
-    }
-
-    function updateHeaderTeams() {
-      const t = parseTeamInput(elements.teamInput.value);
-      elements.headerTeams.textContent = t.length ? 'Teams ' + t.join(', ') : 'Pick your teams';
-    }
-
-    async function handleFindEvents() {
-      const tokens = parseTeamInput(elements.teamInput.value);
-      if (!tokens.length) { showStatus('Enter at least one team number, like 586 or 587B.', 'error'); return; }
-      followTokens = tokens;
-      try { localStorage.setItem('vex_teams', tokens.join(', ')); } catch (e) {}
-      updateHeaderTeams();
-      hideStatus();
-      stopAutoRefresh();
-      elements.eventDetail.classList.add('hidden');
-      elements.eventsSection.classList.add('hidden');
-      elements.foundTeamsSection.classList.add('hidden');
-      elements.teamStep.classList.add('hidden');
-      elements.findIcon.classList.add('animate-spin');
-      elements.findEventsBtn.disabled = true;
-
-      try {
-        const numbers = new Set();
-        tokens.forEach(t => { numbers.add(t); if (/^\d+$/.test(t)) for (let c = 65; c <= 90; c++) numbers.add(t + String.fromCharCode(c)); });
-        const query = [...numbers].map(n => 'number%5B%5D=' + encodeURIComponent(n)).join('&');
-        const found = await apiAll('/teams?' + query + '&registered=true');
-        const teams = [...new Map(found.map(t => [t.id, t])).values()]
-          .filter(t => isTargetTeam(t.number))
-          .sort((a, b) => String(a.number).localeCompare(String(b.number)));
-
-        if (!teams.length) throw new Error('No registered teams found for ' + tokens.join(', ') + '. Check the numbers and try again.');
-
-        elements.foundTeams.innerHTML = teams.map(t => `
-          <span class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs">
-            <span class="font-mono font-bold text-white">${esc(t.number)}</span>
-            <span class="text-slate-400 ml-1.5">${esc(t.team_name || '')}${t.program?.code ? ' · ' + esc(t.program.code) : ''}</span>
-          </span>`).join('');
-        elements.foundTeamsSection.classList.remove('hidden');
-
-        const results = await Promise.allSettled(teams.map(t => apiAll(`/teams/${t.id}/events?start=${dayBefore()}`)));
-        if (results.every(r => r.status === 'rejected')) throw results[0].reason;
-
-        const bySku = new Map();
-        results.forEach((r, i) => {
-          if (r.status !== 'fulfilled') return;
-          r.value.forEach(ev => {
-            if ((evDay(ev.end) || evDay(ev.start)) < todayISO()) return;
-            if (!bySku.has(ev.sku)) bySku.set(ev.sku, { ev, teams: [] });
-            bySku.get(ev.sku).teams.push(teams[i].number);
-          });
-        });
-        const events = [...bySku.values()].sort((a, b) => String(a.ev.start).localeCompare(String(b.ev.start)));
-        renderEventList(events);
-        if (!events.length) showStatus('No upcoming events found for ' + teams.map(t => t.number).join(', ') + '. You can also look up an event by its code.', 'info');
-      } catch (err) {
-        elements.teamStep.classList.remove('hidden');
-        showStatus(err.message, 'error');
-      } finally {
-        elements.findIcon.classList.remove('animate-spin');
-        elements.findEventsBtn.disabled = false;
-      }
-    }
-
-    function renderEventList(events) {
-      elements.eventsList.innerHTML = '';
-      if (!events.length) { elements.eventsSection.classList.add('hidden'); return; }
-      events.forEach(({ ev, teams }) => {
-        const loc = [ev.location?.city, ev.location?.region, ev.location?.country].filter(Boolean).join(', ');
-        const card = document.createElement('div');
-        card.className = 'bg-slate-800 border border-slate-700/80 rounded-2xl p-4 shadow-lg flex flex-col justify-between gap-4 hover:border-slate-600 transition';
-        card.innerHTML = `
-          <div class="space-y-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">${esc(ev.program?.code || '')}</span>
-              ${isHappeningToday(ev) ? '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">Today</span>' : ''}
-              <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i>${esc(formatDateRange(ev.start, ev.end))}</span>
-            </div>
-            <h4 class="text-base font-bold text-white leading-snug">${esc(ev.name)}</h4>
-            <div class="text-xs text-slate-400 flex items-center gap-1.5"><i data-lucide="map-pin" class="w-3.5 h-3.5 text-red-400"></i>${esc(loc || 'Location TBD')}</div>
-            <div class="flex flex-wrap gap-1.5 pt-1">
-              ${teams.map(n => `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-slate-900 text-slate-200 border border-slate-700">${esc(n)}</span>`).join('')}
-            </div>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="font-mono text-[11px] text-slate-500">${esc(ev.sku)}</span>
-            <button data-sku="${esc(ev.sku)}" class="view-event bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition">View matches</button>
-          </div>`;
-        elements.eventsList.appendChild(card);
-      });
-      elements.eventsList.querySelectorAll('.view-event').forEach(b => b.addEventListener('click', () => {
-        state.currentSku = b.dataset.sku;
-        state.fromList = true;
-        elements.eventSkuInput.value = b.dataset.sku;
-        fetchEventData(b.dataset.sku);
-      }));
-      elements.eventsSection.classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    // --- Auto refresh (every 60 seconds) ---
-    const REFRESH_MS = 60000;
-    let refreshTimer = null;
-    let refreshing = false;
-    let lastRefreshAt = 0;
-
-    function stampUpdated(failed) {
-      const t = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });
-      elements.lastUpdated.innerHTML = failed
-        ? `<span class="text-amber-400">Update failed, retrying in 1 min</span>`
-        : `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>Live · updated ${t}`;
-    }
-
-    async function refreshNow() {
-      if (refreshing || !state.currentSku || elements.eventDetail.classList.contains('hidden')) return;
-      refreshing = true;
-      try {
-        await fetchFromLiveApi(state.currentSku, true);
-        lastRefreshAt = Date.now();
-        stampUpdated(false);
-      } catch (err) {
-        console.error(err);
-        stampUpdated(true);
-      } finally {
-        refreshing = false;
-      }
-    }
-
-    function startAutoRefresh() {
-      stopAutoRefresh();
-      lastRefreshAt = Date.now();
-      stampUpdated(false);
-      refreshTimer = setInterval(() => { if (!document.hidden) refreshNow(); }, REFRESH_MS);
-    }
-
-    function stopAutoRefresh() {
-      if (refreshTimer) clearInterval(refreshTimer);
-      refreshTimer = null;
-      elements.lastUpdated.textContent = '';
-    }
-
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && refreshTimer && Date.now() - lastRefreshAt >= REFRESH_MS) refreshNow();
-    });
-
-    function backToEvents() {
-      stopAutoRefresh();
-      elements.eventDetail.classList.add('hidden');
-      if (elements.eventsList.children.length) elements.eventsSection.classList.remove('hidden');
-      if (elements.foundTeams.children.length) elements.foundTeamsSection.classList.remove('hidden');
-      hideStatus();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    async function fetchEventData(sku) {
-      setLoading(true);
-      hideStatus();
-
-      try {
-        await fetchFromLiveApi(sku);
-        startAutoRefresh();
-      } catch (err) {
-        console.error(err);
-        showStatus(`Failed to fetch event data: ${err.message}`, 'error');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    async function fetchFromLiveApi(sku, silent = false) {
-      if (!state.apiKey) {
-        throw new Error('API token is missing from the page.');
-      }
-
-      const token = state.apiKey.trim();
-      const fetchWithAuth = apiGet;
-      const fetchAll = apiAll;
-
-      const eventJson = await fetchWithAuth(`/events?sku[]=${encodeURIComponent(sku)}`);
-      if (!eventJson || !eventJson.data || eventJson.data.length === 0) {
-        throw new Error(`No VEX event found for SKU: ${sku}`);
-      }
-
-      const eventObj = eventJson.data[0];
-      const eventId = eventObj.id;
-      const divisions = eventObj.divisions || [{ id: 1 }];
-
-      let allMatches = [];
-      let allTeams = [];
-      let allRankings = [];
-
-      allTeams = await fetchAll(`/events/${eventId}/teams`).catch(() => []);
-      for (const div of divisions) {
-        const [matchesRes, rankingsRes] = await Promise.allSettled([
-          fetchAll(`/events/${eventId}/divisions/${div.id}/matches`),
-          fetchAll(`/events/${eventId}/divisions/${div.id}/rankings`)
-        ]);
-        if (matchesRes.status === 'rejected') throw matchesRes.reason;
-        allMatches.push(...matchesRes.value);
-        if (rankingsRes.status === 'fulfilled') allRankings.push(...rankingsRes.value);
-      }
-
-      const skillsRows = await fetchAll(`/events/${eventId}/skills`).catch(() => []);
-      const targetTeamsMap = new Map();
-      allTeams.forEach(t => {
-        const num = (t.number || '').trim().toUpperCase();
-        if (isTargetTeam(num)) {
-          targetTeamsMap.set(num, t);
-        }
-      });
-
-      const formattedStandings = [];
-      allRankings.forEach(r => {
-        const teamNum = (r.team?.name || r.team?.number || '').trim().toUpperCase();
-        if (isTargetTeam(teamNum)) {
-          const teamInfo = targetTeamsMap.get(teamNum) || {};
-          formattedStandings.push({
-            team: teamNum,
-            name: teamInfo.team_name || r.team?.name || 'VEX Team',
-            org: teamInfo.organization || teamInfo.school || 'VEX Robotics',
-            rank: r.rank || 0,
-            w: r.wins || 0,
-            l: r.losses || 0,
-            t: r.ties || 0,
-            wp: r.wp || 0,
-            ap: r.ap || 0,
-            sp: r.sp || 0,
-            high: r.high_score || 0
-          });
-        }
-      });
-
-      // Robot skills: best driver + best programming score per team, ranked event-wide
-      const skillTeams = new Map();
-      skillsRows.forEach(r => {
-        const n = (r.team?.name || r.team?.number || '').trim().toUpperCase();
-        const type = String(r.type || '').toLowerCase();
-        if (!n || (type !== 'driver' && type !== 'programming')) return;
-        if (!skillTeams.has(n)) skillTeams.set(n, { team: n, driver: 0, driverAtt: 0, prog: 0, progAtt: 0 });
-        const t = skillTeams.get(n);
-        const sc = Number(r.score) || 0, att = Number(r.attempts) || 0;
-        if (type === 'driver') { t.driver = Math.max(t.driver, sc); t.driverAtt = Math.max(t.driverAtt, att); }
-        else { t.prog = Math.max(t.prog, sc); t.progAtt = Math.max(t.progAtt, att); }
-      });
-      const skillList = [...skillTeams.values()].map(t => ({ ...t, total: t.driver + t.prog }));
-      const rankBy = (arr, cmp) => {
-        const sorted = [...arr].sort(cmp), ranks = new Map();
-        sorted.forEach((t, i) => ranks.set(t.team, (i > 0 && cmp(sorted[i - 1], t) === 0) ? ranks.get(sorted[i - 1].team) : i + 1));
-        return ranks;
-      };
-      const totalRank = rankBy(skillList.filter(t => t.total > 0), (a, b) => (b.total - a.total) || (b.prog - a.prog) || (b.driver - a.driver));
-      const driverRank = rankBy(skillList.filter(t => t.driver > 0), (a, b) => b.driver - a.driver);
-      const progRank = rankBy(skillList.filter(t => t.prog > 0), (a, b) => b.prog - a.prog);
-      const followed = new Set([...targetTeamsMap.keys(), ...[...skillTeams.keys()].filter(isTargetTeam)]);
-      const skillsOut = [...followed].map(n => {
-        const t = skillTeams.get(n) || { team: n, driver: 0, driverAtt: 0, prog: 0, progAtt: 0, total: 0 };
-        const total = t.driver + t.prog;
-        return { ...t, total, rank: totalRank.get(n) || 0, driverRank: driverRank.get(n) || 0, progRank: progRank.get(n) || 0 };
-      });
-
-      const evOrder = (a, b) => {
-        const ta = a.started || a.scheduled || '', tb = b.started || b.scheduled || '';
-        return (ta && tb && ta !== tb) ? (ta < tb ? -1 : 1)
-          : (a.round - b.round) || (a.instance - b.instance) || (a.matchnum - b.matchnum);
-      };
-      const ordered = [...allMatches].sort(evOrder);
-      // Current match = the first match in the schedule that has no score yet.
-      const currentIdx = ordered.findIndex(m => !isScoredMatch(m));
-      const idxById = new Map(ordered.map((m, i) => [m.id, i]));
-      const eventCurrent = currentIdx >= 0
-        ? { name: ordered[currentIdx].name || `Match ${ordered[currentIdx].matchnum}`, field: ordered[currentIdx].field || '', started: !!ordered[currentIdx].started }
-        : null;
-
-      const formattedMatches = [];
-      allMatches.forEach(m => {
-        const redAlliance = m.alliances?.find(a => a.color === 'red');
-        const blueAlliance = m.alliances?.find(a => a.color === 'blue');
-
-        const redTeams = (redAlliance?.teams || []).map(t => t.team?.name || t.team?.number || '').filter(Boolean);
-        const blueTeams = (blueAlliance?.teams || []).map(t => t.team?.name || t.team?.number || '').filter(Boolean);
-
-        const isTargetMatch = [...redTeams, ...blueTeams].some(isTargetTeam);
-
-        if (isTargetMatch) {
-          const isCompleted = isScoredMatch(m);
-          formattedMatches.push({
-            id: m.id,
-            name: m.name || `Match ${m.matchnum}`,
-            field: m.field || 'Main Field',
-            status: isCompleted ? 'completed' : 'scheduled',
-            queue: (!isCompleted && currentIdx >= 0 && idxById.get(m.id) >= currentIdx)
-              ? ordered.slice(currentIdx, idxById.get(m.id)).filter(x => !isScoredMatch(x)).length : null,
-            ts: m.started || m.scheduled || '',
-            round: m.round, instance: m.instance, matchnum: m.matchnum,
-            scheduled: (m.started || m.scheduled) ? new Date(m.started || m.scheduled).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' }) : 'TBD',
-            red: redTeams,
-            redScore: redAlliance?.score ?? 0,
-            blue: blueTeams,
-            blueScore: blueAlliance?.score ?? 0
-          });
-        }
-      });
-
-      formattedMatches.sort((a, b) => (a.ts && b.ts && a.ts !== b.ts) ? (a.ts < b.ts ? -1 : 1)
-        : (a.round - b.round) || (a.instance - b.instance) || (a.matchnum - b.matchnum));
-
-      const liveData = {
-        name: eventObj.name || sku,
-        program: eventObj.program?.code || 'VRC',
-        date: formatDateRange(eventObj.start, eventObj.end),
-        location: `${eventObj.location?.city || ''}, ${eventObj.location?.region || ''}, ${eventObj.location?.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
-        venue: eventObj.location?.venue || 'Venue TBD',
-        teams: formattedStandings.length > 0 ? formattedStandings : Array.from(targetTeamsMap.keys()).map((num, i) => ({
-          team: num,
-          name: targetTeamsMap.get(num)?.team_name || 'VEX Robotics Team',
-          org: targetTeamsMap.get(num)?.organization || 'School',
-          rank: i + 1,
-          w: 0, l: 0, t: 0, wp: 0, ap: 0, sp: 0, high: 0
-        })),
-        matches: formattedMatches,
-        eventCurrent,
-        skills: skillsOut,
-        skillsCount: totalRank.size
-      };
-
-      processEventData(liveData, silent);
-    }
-
-    // --- Process & Render Pipeline ---
-    function processEventData(data, silent = false) {
-      state.eventData = data;
-      state.matches = data.matches || [];
-      state.eventCurrent = data.eventCurrent || null;
-      state.skills = data.skills || [];
-      state.skillsCount = data.skillsCount || 0;
-      state.standings = data.teams || [];
-      const names = new Set(state.standings.map(t => t.team));
-      state.matches.forEach(m => [...m.red, ...m.blue].forEach(t => { if (isTargetTeam(t)) names.add(t.toUpperCase()); }));
-      state.eventTeams = [...names].sort();
-      if (state.teamFilter !== 'all' && !state.eventTeams.some(t => matchesTeamFilter(t, state.teamFilter))) state.teamFilter = 'all';
-      renderTeamFilters();
-      elements.bracketLink.href = 'vex-finals-bracket.html?' + new URLSearchParams({ sku: state.currentSku, teams: followTokens.join(',') }).toString();
-      elements.backLabel.textContent = elements.eventsList.children.length ? 'Back to upcoming events' : 'Back to top';
-      if (!silent) {
-        elements.eventDetail.classList.remove('hidden');
-        elements.eventsSection.classList.add('hidden');
-        elements.foundTeamsSection.classList.add('hidden');
-        elements.eventDetail.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      // Update Header Info
-      elements.eventName.textContent = data.name || 'VEX Robotics Tournament';
-      elements.eventSkuBadge.textContent = state.currentSku;
-      elements.eventProgramBadge.textContent = data.program || 'VRC';
-      elements.eventDate.textContent = data.date || 'Date TBD';
-      elements.eventLocation.textContent = data.location || 'Location TBD';
-      elements.eventVenue.textContent = data.venue || 'Venue TBD';
-      elements.eventSummaryCard.classList.remove('hidden');
-
-      // Update Summary Stats
-      updateSummaryStats();
-
-      // Render Views
-      renderMatches();
-      renderStandings();
-      renderSkills();
-    }
-
-    function updateSummaryStats() {
-      const targetTeamsCount = state.standings.length;
-      const totalMatches = state.matches.length;
-      const completedMatches = state.matches.filter(m => m.status === 'completed').length;
-
-      let totalWins = 0;
-      let totalPlayed = 0;
-      state.standings.forEach(t => {
-        totalWins += t.w || 0;
-        totalPlayed += (t.w || 0) + (t.l || 0) + (t.t || 0);
-      });
-
-      const winRate = totalPlayed > 0 ? Math.round((totalWins / totalPlayed) * 100) : 0;
-
-      elements.statTotalTeams.textContent = Math.max(targetTeamsCount, state.eventTeams.length);
-      elements.statTotalMatches.textContent = totalMatches;
-      elements.statCompletedMatches.textContent = completedMatches;
-      elements.statAvgWinRate.textContent = `${winRate}%`;
-    }
-
-    function renderMatches() {
-      elements.matchesContainer.innerHTML = '';
-      
-      const filtered = state.matches.filter(m => {
-        // 1. Team filter (All vs 586 vs 587)
-        if (state.teamFilter !== 'all' && ![...m.red, ...m.blue].some(t => isTargetTeam(t) && matchesTeamFilter(t, state.teamFilter))) return false;
-
-        // 2. Status filter
-        if (state.statusFilter === 'completed' && m.status !== 'completed') return false;
-        if (state.statusFilter === 'upcoming' && m.status !== 'scheduled') return false;
-
-        // 3. Search input
-        if (state.matchSearchQuery) {
-          const q = state.matchSearchQuery;
-          const matchText = `${m.name} ${m.field} ${m.red.join(' ')} ${m.blue.join(' ')}`.toLowerCase();
-          if (!matchText.includes(q)) return false;
-        }
-
-        return true;
-      });
-
-      // Current-match banner
-      const nextMine = filtered.filter(m => m.queue !== null && m.queue !== undefined).sort((a, b) => a.queue - b.queue)[0];
-      if (state.eventCurrent) {
-        const c = state.eventCurrent;
-        const away = (q) => q === 0 ? 'on now' : q === 1 ? 'up next' : `${q} matches away`;
-        elements.currentBanner.className = 'bg-amber-500/10 border border-amber-500/30 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2';
-        elements.currentBanner.innerHTML = `
-          <div class="flex items-center gap-2.5 text-sm">
-            <span class="relative flex h-2.5 w-2.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span></span>
-            <span class="text-slate-300">Current match:</span>
-            <span class="font-bold text-white">${esc(c.name)}</span>
-            ${c.field ? `<span class="text-xs text-slate-400">· ${esc(c.field)}</span>` : ''}
-          </div>
-          <div class="text-xs text-amber-400 font-semibold">${nextMine ? `Your next: ${esc(nextMine.name)} (${away(nextMine.queue)})` : 'No more matches for your selection'}</div>`;
-      } else {
-        elements.currentBanner.className = 'hidden';
-        elements.currentBanner.innerHTML = '';
-      }
-
-      if (filtered.length === 0) {
-        elements.emptyMatchesState.classList.remove('hidden');
-        return;
-      }
-
-      elements.emptyMatchesState.classList.add('hidden');
-
-      const renderCard = (m) => {
-        const card = document.createElement('div');
-        const isCurrent = m.queue === 0;
-        const isCompleted = m.status === 'completed';
-        const redWon = isCompleted && m.redScore > m.blueScore;
-        const blueWon = isCompleted && m.blueScore > m.redScore;
-        const tie = isCompleted && m.redScore === m.blueScore;
-
-        card.className = `bg-slate-800 border ${isCurrent ? 'border-amber-500/60 ring-2 ring-amber-400/40' : isCompleted ? 'border-slate-700/80' : 'border-blue-500/30'} rounded-2xl p-4 shadow-lg flex flex-col justify-between space-y-4 hover:border-slate-600 transition`;
-
-        // Card Header
-        let cardHtml = `
-          <div class="flex items-center justify-between border-b border-slate-700/60 pb-2.5">
-            <div class="flex items-center space-x-2">
-              <span class="font-bold text-sm text-white">${m.name}</span>
-              <span class="text-[11px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-md border border-slate-700 font-mono">${m.field}</span>
-            </div>
-            <div class="flex items-center space-x-1.5">
-              ${isCurrent ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/40 animate-pulse">NOW</span>' : (m.queue === 1 ? '<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/40">NEXT</span>' : '')}
-              <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full ${isCompleted ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}">
-                ${isCompleted ? 'Final' : m.scheduled}
-              </span>
-            </div>
-          </div>
-        `;
-
-        // Teams & Scores Display
-        cardHtml += `<div class="space-y-2">`;
-        
-        // RED ALLIANCE
-        cardHtml += `
-          <div class="p-2.5 rounded-xl border ${redWon ? 'bg-red-950/30 border-red-500/40' : 'bg-slate-900/60 border-slate-700/50'} flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <div class="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-              <div class="flex flex-wrap gap-1.5">
-                ${m.red.map(t => {
-                  const isTarget = isTargetTeam(t);
-                  return `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${isTarget ? 'bg-red-500 text-white shadow-sm' : 'bg-slate-800 text-slate-300'}">${t}</span>`;
-                }).join('')}
-              </div>
-            </div>
-            <div class="text-base font-black ${redWon ? 'text-red-400' : 'text-slate-300'}">${isCompleted ? m.redScore : '--'}</div>
-          </div>
-        `;
-
-        // BLUE ALLIANCE
-        cardHtml += `
-          <div class="p-2.5 rounded-xl border ${blueWon ? 'bg-blue-950/30 border-blue-500/40' : 'bg-slate-900/60 border-slate-700/50'} flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-              <div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
-              <div class="flex flex-wrap gap-1.5">
-                ${m.blue.map(t => {
-                  const isTarget = isTargetTeam(t);
-                  return `<span class="px-2 py-0.5 rounded text-xs font-mono font-bold ${isTarget ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-800 text-slate-300'}">${t}</span>`;
-                }).join('')}
-              </div>
-            </div>
-            <div class="text-base font-black ${blueWon ? 'text-blue-400' : 'text-slate-300'}">${isCompleted ? m.blueScore : '--'}</div>
-          </div>
-        `;
-
-        cardHtml += `</div>`;
-
-        // Card Footer Status
-        if (isCompleted) {
-          let outcomeText = tie ? 'Match Tied' : (redWon ? 'Red Alliance Victory' : 'Blue Alliance Victory');
-          cardHtml += `
-            <div class="text-[11px] text-slate-400 text-right font-medium">
-              ${outcomeText}
-            </div>
-          `;
-        }
-
-        if (!isCompleted && m.queue > 1) {
-          cardHtml += `<div class="text-[11px] text-slate-400 text-right font-medium">${m.queue} matches away</div>`;
-        }
-
-        card.innerHTML = cardHtml;
-        elements.matchesContainer.appendChild(card);
-      };
-
-      filtered.forEach(renderCard);
-    }
-
-    function renderStandings() {
-      elements.standingsTableBody.innerHTML = '';
-
-      const filtered = state.standings
-        .filter(t => matchesTeamFilter(t.team, state.teamFilter))
-        .sort((a, b) => {
-          const ra = a.rank > 0 ? a.rank : Infinity, rb = b.rank > 0 ? b.rank : Infinity;
-          return ra === rb ? String(a.team).localeCompare(String(b.team)) : ra - rb;
-        });
-
-      if (filtered.length === 0) {
-        elements.standingsTableBody.innerHTML = `
-          <tr>
-            <td colspan="9" class="py-8 text-center text-slate-500 text-xs">
-              No team standings found matching criteria.
-            </td>
-          </tr>
-        `;
-        return;
-      }
-
-      filtered.forEach(t => {
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-slate-800/60 transition border-b border-slate-700/40';
-
-        const totalPlayed = (t.w || 0) + (t.l || 0) + (t.t || 0);
-        const winPct = totalPlayed > 0 ? Math.round((t.w / totalPlayed) * 100) : 0;
-        const is586 = state.eventTeams.indexOf(t.team) % 2 === 0;
-
-        row.innerHTML = `
-          <td class="py-3.5 px-4 text-center font-bold text-slate-300">#${t.rank || '-'}</td>
-          <td class="py-3.5 px-4">
-            <span class="font-mono font-bold px-2.5 py-1 rounded-lg ${is586 ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'}">
-              ${t.team}
-            </span>
-          </td>
-          <td class="py-3.5 px-4">
-            <div class="font-semibold text-white">${t.name}</div>
-            <div class="text-[11px] text-slate-400">${t.org}</div>
-          </td>
-          <td class="py-3.5 px-4 text-center font-mono text-slate-200">${t.w} - ${t.l} - ${t.t}</td>
-          <td class="py-3.5 px-4 text-center font-bold ${winPct >= 50 ? 'text-emerald-400' : 'text-slate-400'}">${winPct}%</td>
-          <td class="py-3.5 px-4 text-center font-mono text-slate-300">${t.wp || 0}</td>
-          <td class="py-3.5 px-4 text-center font-mono text-slate-300">${t.ap || 0}</td>
-          <td class="py-3.5 px-4 text-center font-mono text-slate-300">${t.sp || 0}</td>
-          <td class="py-3.5 px-4 text-center font-mono font-bold text-amber-400">${t.high || 0}</td>
-        `;
-
-        elements.standingsTableBody.appendChild(row);
-      });
-    }
-
-    // --- UI Controls & Navigation ---
-    function renderTeamFilters() {
-      const on = 'bg-slate-800 text-white shadow-sm';
-      const off = 'text-slate-400 hover:text-white';
-      const mk = (val, label) => `<button data-team="${esc(val)}" class="team-filter-btn ${state.teamFilter === val ? on : off} font-semibold text-xs px-3.5 py-1.5 rounded-lg transition">${esc(label)}</button>`;
+    function buildSeries(matches, ranks = new Map()) {
+      const elim = matches.filter(m => ROUND_ORDER.includes(m.round));
       const groups = new Map();
-      state.eventTeams.forEach(t => { const b = teamBase(t); if (!groups.has(b)) groups.set(b, []); groups.get(b).push(t); });
-      let html = mk('all', 'All teams');
-      groups.forEach((list, base) => {
-        if (list.length > 1) html += mk('group:' + base, 'All ' + base);
-        html += list.map(t => mk(t, t)).join('');
+      elim.forEach(m => {
+        const k = m.round + '-' + m.instance;
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(m);
       });
-      elements.teamFilterBar.innerHTML = html;
-      elements.teamFilterBar.querySelectorAll('button').forEach(b => b.addEventListener('click', () => setTeamFilter(b.dataset.team)));
-    }
-
-    function setTeamFilter(filter) {
-      state.teamFilter = filter;
-      renderTeamFilters();
-      renderMatches();
-      renderStandings();
-      renderSkills();
-    }
-
-    function setActiveTab(tab) {
-      state.activeTab = tab;
-      const on = 'tab-btn bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition shadow-lg shadow-blue-900/20';
-      const off = 'tab-btn bg-slate-800 text-slate-400 hover:text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center space-x-2 transition';
-      elements.tabMatchesBtn.className = tab === 'matches' ? on : off;
-      elements.tabStandingsBtn.className = tab === 'standings' ? on : off;
-      elements.tabSkillsBtn.className = tab === 'skills' ? on : off;
-      elements.matchesView.classList.toggle('hidden', tab !== 'matches');
-      elements.standingsView.classList.toggle('hidden', tab !== 'standings');
-      elements.skillsView.classList.toggle('hidden', tab !== 'skills');
-    }
-
-    function renderSkills() {
-      const rows = (state.skills || [])
-        .filter(t => matchesTeamFilter(t.team, state.teamFilter))
-        .sort((a, b) => {
-          const ra = a.rank || Infinity, rb = b.rank || Infinity;
-          return ra === rb ? String(a.team).localeCompare(String(b.team)) : ra - rb;
+      const series = [];
+      groups.forEach((list, key) => {
+        list.sort((a, b) => a.matchnum - b.matchnum);
+        const first = list[0];
+        const redA = (first.alliances || []).find(a => a.color === 'red');
+        const blueA = (first.alliances || []).find(a => a.color === 'blue');
+        const sideA = { teams: teamNames(redA), wins: 0 }, sideB = { teams: teamNames(blueA), wins: 0 };
+        const games = list.map(m => {
+          const r = (m.alliances || []).find(a => a.color === 'red'), b = (m.alliances || []).find(a => a.color === 'blue');
+          let aAlliance = r, bAlliance = b;
+          const rn = teamNames(r), bn = teamNames(b);
+          const overlapR = rn.filter(n => sideA.teams.includes(n)).length, overlapB = bn.filter(n => sideA.teams.includes(n)).length;
+          if (overlapB > overlapR) { aAlliance = b; bAlliance = r; }
+          if (!sideA.teams.length && teamNames(aAlliance).length) sideA.teams = teamNames(aAlliance);
+          if (!sideB.teams.length && teamNames(bAlliance).length) sideB.teams = teamNames(bAlliance);
+          const scored = isScored(m);
+          const sa = Number(aAlliance?.score) || 0, sb = Number(bAlliance?.score) || 0;
+          if (scored) { if (sa > sb) sideA.wins++; else if (sb > sa) sideB.wins++; }
+          return { m, scored, sa, sb, label: m.matchnum };
         });
-      elements.skillsNote.textContent = state.skillsCount
-        ? `Ranked against ${state.skillsCount} teams with skills scores at this event. Total is best driver score plus best programming score.`
-        : 'No skills scores have been posted for this event yet.';
-      if (!rows.length) {
-        elements.skillsTableBody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-500 text-xs">No skills data for the selected teams.</td></tr>';
+        // Alliance rank = best qualification rank among its teams (the alliance captain)
+        const allianceRank = (teams) => {
+          const rs = teams.map(n => ranks.get(String(n).toUpperCase())).filter(Boolean);
+          return rs.length ? Math.min(...rs) : null;
+        };
+        sideA.rank = allianceRank(sideA.teams);
+        sideB.rank = allianceRank(sideB.teams);
+        const round = first.round;
+        const needed = round === 5 ? 2 : 1;
+        const winner = sideA.wins >= needed ? 'A' : sideB.wins >= needed ? 'B' : null;
+        series.push({ key, round, instance: first.instance, sideA, sideB, games, winner, needed,
+          field: first.field || '', time: first.started || first.scheduled || '' });
+      });
+      return series;
+    }
+
+    // ---------- Render ----------
+    function render() {
+      const div = divisions.find(d => d.id === activeDiv);
+      $('eventName').textContent = eventInfo.name || currentSku;
+      $('eventMeta').textContent = [currentSku, eventInfo.location?.city, eventInfo.location?.region].filter(Boolean).join(' · ');
+
+      $('divTabs').innerHTML = divisions.length > 1 ? divisions.map(d => `
+        <button data-div="${d.id}" class="div-tab text-xs font-semibold px-3.5 py-1.5 rounded-lg transition ${d.id === activeDiv ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}">${esc(d.name)}</button>`).join('') : '';
+      document.querySelectorAll('.div-tab').forEach(b => b.addEventListener('click', () => { activeDiv = Number(b.dataset.div) || b.dataset.div; render(); }));
+
+      const series = buildSeries(div.matches, div.ranks);
+      $('bracketWrap').classList.remove('hidden');
+      if (!series.length) {
+        $('bracket').innerHTML = '<p class="text-sm text-slate-400 py-6 px-2">No elimination matches are posted for this division yet. The bracket appears after alliance selection.</p>';
         return;
       }
-      const cell = (score, att) => score > 0
-        ? `<span class="font-bold text-white">${score}</span>${att ? `<span class="text-slate-500"> (${att} ${att === 1 ? 'run' : 'runs'})</span>` : ''}`
-        : '<span class="text-slate-500">—</span>';
-      const rk = (r) => r ? `#${r}` : '—';
-      elements.skillsTableBody.innerHTML = rows.map(t => `
-        <tr class="hover:bg-slate-800/60 transition border-b border-slate-700/40">
-          <td class="py-3.5 px-4 text-center font-bold text-slate-300">${rk(t.rank)}</td>
-          <td class="py-3.5 px-4 font-mono font-bold text-white">${esc(t.team)}</td>
-          <td class="py-3.5 px-4 text-center">${t.total > 0 ? `<span class="font-bold text-emerald-400">${t.total}</span>` : '<span class="text-slate-500">—</span>'}</td>
-          <td class="py-3.5 px-4 text-center">${cell(t.driver, t.driverAtt)}</td>
-          <td class="py-3.5 px-4 text-center text-slate-300">${rk(t.driverRank)}</td>
-          <td class="py-3.5 px-4 text-center">${cell(t.prog, t.progAtt)}</td>
-          <td class="py-3.5 px-4 text-center text-slate-300">${rk(t.progRank)}</td>
-        </tr>`).join('');
+      hideStatus();
+
+      // current series = first unscored elimination match
+      const elimMatches = div.matches.filter(m => ROUND_ORDER.includes(m.round)).sort((a, b) => {
+        const ta = a.started || a.scheduled || '', tb = b.started || b.scheduled || '';
+        return (ta && tb && ta !== tb) ? (ta < tb ? -1 : 1) : (ROUND_ORDER.indexOf(a.round) - ROUND_ORDER.indexOf(b.round)) || (a.instance - b.instance) || (a.matchnum - b.matchnum);
+      });
+      const cur = elimMatches.find(m => !isScored(m));
+      const curKey = cur ? cur.round + '-' + cur.instance : null;
+
+      const cols = ROUND_ORDER.filter(r => series.some(s => s.round === r));
+      $('bracket').innerHTML = cols.map(r => {
+        const list = series.filter(s => s.round === r).sort((a, b) => a.instance - b.instance);
+        return `
+        <div class="flex flex-col w-64 shrink-0">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 text-center">${esc(ROUND_NAMES[r])}</h3>
+          <div class="flex flex-col justify-around gap-4 flex-1">${list.map(s => seriesCard(s, s.key === curKey)).join('')}</div>
+        </div>`;
+      }).join('');
     }
 
-    function showStatus(message, type = 'info') {
-      elements.statusContent.textContent = message;
-      elements.statusMessage.className = 'rounded-xl p-4 border text-sm flex items-start space-x-3 transition-all duration-300 ';
-
-      if (type === 'error') {
-        elements.statusMessage.classList.add('bg-red-500/10', 'border-red-500/30', 'text-red-300');
-        elements.statusIcon.className = 'w-5 h-5 flex-shrink-0 mt-0.5 text-red-400';
-      } else if (type === 'success') {
-        elements.statusMessage.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-300');
-        elements.statusIcon.className = 'w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-400';
-      } else {
-        elements.statusMessage.classList.add('bg-blue-500/10', 'border-blue-500/30', 'text-blue-300');
-        elements.statusIcon.className = 'w-5 h-5 flex-shrink-0 mt-0.5 text-blue-400';
-      }
-
-      elements.statusMessage.classList.remove('hidden');
+    function sideRow(side, isWinner, hasWinner, wins, showWins, lastScore) {
+      const names = side.teams.length
+        ? side.teams.map(n => isFollowed(n) ? `<span class="px-1 rounded bg-amber-500/20 text-amber-400 font-bold">${esc(n)}</span>` : esc(n)).join(', ')
+        : '<span class="text-slate-500 italic">TBD</span>';
+      const num = showWins ? wins : (lastScore ?? '');
+      const rankTag = (side.rank && side.teams.length)
+        ? `<span class="inline-block mr-1.5 px-1.5 py-0.5 rounded bg-slate-700 text-slate-200 text-[10px] font-bold align-middle" title="Alliance rank">#${side.rank}</span>` : '';
+      return `
+        <div class="flex items-center justify-between gap-2 px-3 py-2 ${isWinner ? 'bg-emerald-500/10' : ''} ${hasWinner && !isWinner ? 'opacity-60' : ''}">
+          <div class="text-xs ${isWinner ? 'font-bold text-white' : 'text-slate-200'} leading-snug">${rankTag}${names}</div>
+          <div class="text-sm font-extrabold tabular-nums ${isWinner ? 'text-emerald-400' : 'text-slate-300'}">${num}</div>
+        </div>`;
     }
 
-    function hideStatus() {
-      elements.statusMessage.classList.add('hidden');
+    function seriesCard(s, isCurrent) {
+      const multi = s.games.length > 1 || s.round === 5;
+      const played = s.games.filter(g => g.scored);
+      const last = played[played.length - 1];
+      const hasWinner = !!s.winner;
+      const label = (s.round === 5 ? 'Finals' : `${ROUND_SHORT[s.round]} ${s.instance}`);
+      const gameLines = s.games.map(g => g.scored
+        ? `M${g.label}: ${g.sa}–${g.sb}`
+        : `M${g.label}: ${g.m.started || g.m.scheduled ? new Date(g.m.started || g.m.scheduled).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}`).join(' · ');
+      return `
+        <div class="rounded-xl border ${isCurrent ? 'border-amber-500/60 ring-2 ring-amber-400/40' : 'border-slate-700'} bg-slate-900 overflow-hidden shadow-md">
+          <div class="flex items-center justify-between px-3 py-1.5 border-b border-slate-700 bg-slate-800 text-[11px]">
+            <span class="font-bold text-slate-300 uppercase tracking-wide">${esc(label)}</span>
+            ${isCurrent ? '<span class="font-bold text-amber-400 animate-pulse">NOW</span>' : `<span class="text-slate-400">${esc(s.field)}</span>`}
+          </div>
+          ${sideRow(s.sideA, s.winner === 'A', hasWinner, s.sideA.wins, multi, last ? last.sa : null)}
+          <div class="h-px bg-slate-700"></div>
+          ${sideRow(s.sideB, s.winner === 'B', hasWinner, s.sideB.wins, multi, last ? last.sb : null)}
+          <div class="px-3 py-1.5 border-t border-slate-700 text-[11px] text-slate-400">${esc(gameLines)}</div>
+        </div>`;
     }
 
-    function setLoading(loading) {
-      state.isLoading = loading;
-      if (loading) {
-        elements.fetchIcon.classList.add('animate-spin');
-        elements.fetchDataBtn.disabled = true;
-        elements.fetchDataBtn.classList.add('opacity-75');
-      } else {
-        elements.fetchIcon.classList.remove('animate-spin');
-        elements.fetchDataBtn.disabled = false;
-        elements.fetchDataBtn.classList.remove('opacity-75');
-      }
+    // ---------- Refresh / controls ----------
+    function stamp(failed) {
+      $('lastUpdated').innerHTML = failed
+        ? '<span class="text-amber-400">Update failed, retrying in 1 min</span>'
+        : `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>Live · updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' })}`;
+    }
+    async function refresh() {
+      if (busy || !currentSku) return;
+      busy = true;
+      try { await load(currentSku, true); stamp(false); } catch (e) { console.error(e); stamp(true); } finally { busy = false; }
+    }
+    async function start() {
+      const sku = $('skuInput').value.trim().toUpperCase();
+      if (!sku) { showStatus('Enter an event code.', 'error'); return; }
+      follow = parseTeams($('teamsInput').value);
+      currentSku = sku; activeDiv = null;
+      clearInterval(timer);
+      $('bracketWrap').classList.add('hidden');
+      showStatus('Loading bracket…');
+      $('loadBtn').disabled = true;
+      try {
+        await load(sku);
+        stamp(false);
+        timer = setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MS);
+        const back = new URLSearchParams({ sku, teams: follow.join(',') });
+        $('backLink').href = 'vex.matches.html?' + back.toString();
+      } catch (e) {
+        showStatus(e.message, 'error');
+      } finally { $('loadBtn').disabled = false; }
     }
 
-    function formatDateRange(startStr, endStr) {
-      if (!startStr) return 'TBD';
-      const start = new Date(startStr);
-      if (isNaN(start)) return startStr;
-      return start.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
-    // --- Theme Management ---
     function updateThemeIcon() {
-      const isDark = document.documentElement.classList.contains('dark');
-      elements.themeToggleBtn.innerHTML = `<i data-lucide="${isDark ? 'moon' : 'sun'}" class="w-4 h-4"></i>`;
-      elements.themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+      const dark = document.documentElement.classList.contains('dark');
+      $('themeToggleBtn').innerHTML = `<i data-lucide="${dark ? 'moon' : 'sun'}" class="w-4 h-4"></i>`;
       lucide.createIcons();
     }
 
-    function initTheme() {
+    document.addEventListener('DOMContentLoaded', () => {
       let saved = null;
       try { saved = localStorage.getItem('theme'); } catch (e) {}
       document.documentElement.classList.toggle('dark', saved !== 'light');
+      $('themeToggleBtn').addEventListener('click', () => {
+        const dark = document.documentElement.classList.toggle('dark');
+        try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+        updateThemeIcon();
+      });
       updateThemeIcon();
-    }
-
-    function toggleTheme() {
-      const isDark = document.documentElement.classList.toggle('dark');
-      try { localStorage.setItem('theme', isDark ? 'dark' : 'light'); } catch (e) {}
-      updateThemeIcon();
-    }
+      $('loadBtn').addEventListener('click', start);
+      ['skuInput', 'teamsInput'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') start(); }));
+      const p = new URLSearchParams(location.search);
+      let teams = p.get('teams') || '';
+      if (!teams) { try { teams = localStorage.getItem('vex_teams') || ''; } catch (e) {} }
+      $('teamsInput').value = teams;
+      if (p.get('sku')) { $('skuInput').value = p.get('sku'); start(); }
+    });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && currentSku) refresh(); });
   </script>
 </body>
 </html>
