@@ -159,6 +159,16 @@
         </button>
       </div>
 
+      <div class="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+        <label for="pastRange" class="font-semibold">Events to include</label>
+        <select id="pastRange" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+          <option value="none">Upcoming and today only</option>
+          <option value="aug1">Also past events since Aug 1</option>
+          <option value="90">Also past events, last 90 days</option>
+          <option value="365">Also past events, last 365 days</option>
+        </select>
+      </div>
+
       <details class="text-xs text-slate-400">
         <summary class="cursor-pointer hover:text-slate-200 w-fit">Already have an event code?</summary>
         <div class="flex flex-col sm:flex-row gap-2 mt-3">
@@ -401,6 +411,11 @@
     };
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const dayBefore = () => { const d = new Date(); d.setDate(d.getDate() - 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+    const isoOf = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const daysAgoISO = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return isoOf(d); };
+    // Most recent Aug 1 on or before today (never more than 365 days back)
+    const aug1ISO = () => { const now = new Date(); let y = now.getFullYear(); if (new Date(y, 7, 1) > now) y--; return y + '-08-01'; };
+    const rangeStartISO = (range) => range === 'aug1' ? aug1ISO() : (range === '90' || range === '365') ? daysAgoISO(Number(range)) : dayBefore();
     const evDay = (v) => String(v || '').slice(0, 10);
     const isHappeningToday = (ev) => evDay(ev.start) <= todayISO() && todayISO() <= (evDay(ev.end) || evDay(ev.start));
     const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
@@ -467,6 +482,7 @@
       teamStep: document.getElementById('teamStep'),
       changeTeamsBtn: document.getElementById('changeTeamsBtn'),
       teamInput: document.getElementById('teamInput'),
+      pastRange: document.getElementById('pastRange'),
       findEventsBtn: document.getElementById('findEventsBtn'),
       findIcon: document.getElementById('findIcon'),
       headerTeams: document.getElementById('headerTeams'),
@@ -525,6 +541,7 @@
       initTheme();
       
       try { elements.teamInput.value = localStorage.getItem('vex_teams') || ''; } catch (e) {}
+      try { elements.pastRange.value = localStorage.getItem('vex_past_range') || 'none'; } catch (e) {}
       const qp = new URLSearchParams(location.search);
       if (qp.get('teams')) elements.teamInput.value = qp.get('teams');
       updateHeaderTeams();
@@ -600,6 +617,8 @@
     async function handleFindEvents() {
       const tokens = parseTeamInput(elements.teamInput.value);
       if (!tokens.length) { showStatus('Enter at least one team number, like 586 or 587B.', 'error'); return; }
+      const range = elements.pastRange.value;
+      try { localStorage.setItem('vex_past_range', range); } catch (e) {}
       followTokens = tokens;
       try { localStorage.setItem('vex_teams', tokens.join(', ')); } catch (e) {}
       updateHeaderTeams();
@@ -630,21 +649,22 @@
           </span>`).join('');
         elements.foundTeamsSection.classList.remove('hidden');
 
-        const results = await Promise.allSettled(teams.map(t => apiAll(`/teams/${t.id}/events?start=${dayBefore()}`)));
+        const results = await Promise.allSettled(teams.map(t => apiAll(`/teams/${t.id}/events?start=${rangeStartISO(range)}`)));
         if (results.every(r => r.status === 'rejected')) throw results[0].reason;
 
         const bySku = new Map();
         results.forEach((r, i) => {
           if (r.status !== 'fulfilled') return;
           r.value.forEach(ev => {
-            if ((evDay(ev.end) || evDay(ev.start)) < todayISO()) return;
+            if (range === 'none' && (evDay(ev.end) || evDay(ev.start)) < todayISO()) return;
+            if (range !== 'none' && evDay(ev.start) < rangeStartISO(range)) return;
             if (!bySku.has(ev.sku)) bySku.set(ev.sku, { ev, teams: [] });
             bySku.get(ev.sku).teams.push(teams[i].number);
           });
         });
         const events = [...bySku.values()].sort((a, b) => String(a.ev.start).localeCompare(String(b.ev.start)));
         renderEventList(events);
-        if (!events.length) showStatus('No upcoming events found for ' + teams.map(t => t.number).join(', ') + '. You can also look up an event by its code.', 'info');
+        if (!events.length) showStatus('No ' + (range === 'none' ? 'upcoming ' : '') + 'events found for ' + teams.map(t => t.number).join(', ') + '. You can also look up an event by its code.', 'info');
       } catch (err) {
         elements.teamStep.classList.remove('hidden');
         showStatus(err.message, 'error');
@@ -657,7 +677,19 @@
     function renderEventList(events) {
       elements.eventsList.innerHTML = '';
       if (!events.length) { elements.eventsSection.classList.add('hidden'); return; }
-      events.forEach(({ ev, teams }) => {
+      const isPast = (ev) => (evDay(ev.end) || evDay(ev.start)) < todayISO();
+      const up = events.filter(e => !isPast(e.ev));
+      const past = events.filter(e => isPast(e.ev)).sort((a, b) => String(b.ev.start).localeCompare(String(a.ev.start)));
+      const addHead = (text, n) => {
+        const h = document.createElement('div');
+        h.className = 'col-span-full flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-slate-400';
+        h.innerHTML = `<span>${text} (${n})</span><span class="flex-1 h-px bg-slate-700"></span>`;
+        elements.eventsList.appendChild(h);
+      };
+      [...up, ...past].forEach((item) => {
+        const { ev, teams } = item;
+        if (past.length && up.length && item === up[0]) addHead('Upcoming and today', up.length);
+        if (past.length && item === past[0]) addHead('Past events', past.length);
         const loc = [ev.location?.city, ev.location?.region, ev.location?.country].filter(Boolean).join(', ');
         const card = document.createElement('div');
         card.className = 'bg-slate-800 border border-slate-700/80 rounded-2xl p-4 shadow-lg flex flex-col justify-between gap-4 hover:border-slate-600 transition';
@@ -665,6 +697,7 @@
           <div class="space-y-2">
             <div class="flex flex-wrap items-center gap-2">
               <span class="bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">${esc(ev.program?.code || '')}</span>
+              ${isPast(ev) ? '<span class="bg-slate-700 text-slate-300 border border-slate-600 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">Past</span>' : ''}
               ${isHappeningToday(ev) ? '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold px-2.5 py-0.5 rounded-md uppercase">Today</span>' : ''}
               <span class="text-xs text-slate-400 flex items-center gap-1"><i data-lucide="calendar" class="w-3.5 h-3.5"></i>${esc(formatDateRange(ev.start, ev.end))}</span>
             </div>
@@ -720,6 +753,10 @@
 
     function startAutoRefresh() {
       stopAutoRefresh();
+      if (state.eventEnd && evDay(state.eventEnd) < todayISO()) {
+        elements.lastUpdated.innerHTML = '<span class="text-slate-500">Event ended</span>';
+        return;
+      }
       lastRefreshAt = Date.now();
       stampUpdated(false);
       refreshTimer = setInterval(() => { if (!document.hidden) refreshNow(); }, REFRESH_MS);
@@ -774,6 +811,7 @@
       }
 
       const eventObj = eventJson.data[0];
+      state.eventEnd = eventObj.end || eventObj.start || '';
       const eventId = eventObj.id;
       const divisions = eventObj.divisions || [{ id: 1 }];
 
