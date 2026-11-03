@@ -151,6 +151,7 @@
         </div>
         <span id="lastUpdated" class="text-xs text-slate-500 flex items-center gap-1.5"></span>
       </div>
+      <div id="champion" class="hidden"></div>
       <div id="divTabs" class="flex flex-wrap gap-1.5"></div>
       <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-xl overflow-x-auto custom-scrollbar">
         <div id="bracket" class="flex gap-6 min-w-max"></div>
@@ -214,8 +215,70 @@
     }
     const hideStatus = () => $('statusMsg').className = 'hidden';
 
+
+    // ---------- Demo mode (event code "Demo-Mode") ----------
+    const DEMO_SKU = 'DEMO-MODE';
+    const DEMO_ALLIANCES = {
+      1: ['587U', '3009C'], 2: ['1010X', '4412D'], 3: ['586A', '7120B'], 4: ['586E', '2005F'],
+      5: ['587W', '6611G'], 6: ['3456H', '8822J'], 7: ['587Y', '9910K'], 8: ['2468M', '1357N']
+    };
+    const DEMO_RANKS = new Map();
+    Object.entries(DEMO_ALLIANCES).forEach(([n, teams]) => { DEMO_RANKS.set(teams[0], Number(n)); DEMO_RANKS.set(teams[1], 8 + Number(n)); });
+    // 586E's alliance (4) wins: a tied quarterfinal gets replayed, then it takes the finals 2-1.
+    const DEMO_SCRIPT = [
+      { s: 'QF1', round: 3, inst: 1, num: 1, a: 1, b: 8, sa: 62, sb: 41 },
+      { s: 'QF2', round: 3, inst: 2, num: 1, a: 4, b: 5, sa: 48, sb: 48 },
+      { s: 'QF3', round: 3, inst: 3, num: 1, a: 2, b: 7, sa: 58, sb: 50 },
+      { s: 'QF4', round: 3, inst: 4, num: 1, a: 3, b: 6, sa: 49, sb: 53 },
+      { s: 'QF2', round: 3, inst: 2, num: 2, a: 4, b: 5, sa: 55, sb: 47 },
+      { s: 'SF1', round: 4, inst: 1, num: 1, a: 'W:QF1', b: 'W:QF2', sa: 57, sb: 60 },
+      { s: 'SF2', round: 4, inst: 2, num: 1, a: 'W:QF3', b: 'W:QF4', sa: 65, sb: 52 },
+      { s: 'F', round: 5, inst: 1, num: 1, a: 'W:SF1', b: 'W:SF2', sa: 66, sb: 70 },
+      { s: 'F', round: 5, inst: 1, num: 2, a: 'W:SF2', b: 'W:SF1', sa: 64, sb: 72 },
+      { s: 'F', round: 5, inst: 1, num: 3, a: 'W:SF1', b: 'W:SF2', sa: 75, sb: 68 }
+    ];
+    const DEMO_TICK_MS = 3500;
+    let demoStep = 0;
+    const demoBase = Date.now();
+
+    function demoBuild(step) {
+      const wins = {}, winners = {}, lastIdx = {}, matches = [];
+      DEMO_SCRIPT.forEach((g, i) => {
+        const need = g.round === 5 ? 2 : 1;
+        // follow-up games only exist once the previous game was played and the series is still open
+        if (g.num > 1 && (lastIdx[g.s] === undefined || lastIdx[g.s] >= step || winners[g.s])) return;
+        lastIdx[g.s] = i;
+        const resolve = (t) => typeof t === 'number' ? t : (winners[t.slice(2)] ?? null);
+        const A = resolve(g.a), B = resolve(g.b);
+        const scored = i < step;
+        if (scored) {
+          wins[g.s] = wins[g.s] || {};
+          const w = g.sa > g.sb ? A : g.sb > g.sa ? B : null;
+          if (w) { wins[g.s][w] = (wins[g.s][w] || 0) + 1; if (wins[g.s][w] >= need) winners[g.s] = w; }
+        }
+        const when = new Date(demoBase + i * 8 * 60000).toISOString();
+        const mk = (color, no, score) => ({ color, score: scored ? score : 0,
+          teams: (no ? DEMO_ALLIANCES[no] : []).map(n => ({ team: { name: n } })) });
+        matches.push({ id: i + 1, round: g.round, instance: g.inst, matchnum: g.num, field: 'Field ' + ((i % 2) + 1),
+          scheduled: when, started: scored ? when : null, scored,
+          alliances: [mk('red', A, g.sa), mk('blue', B, g.sb)] });
+      });
+      return matches;
+    }
+
+    function demoLoad() {
+      eventInfo = { name: 'Demo Mode Championship', location: { city: 'Demo City', region: 'IN' } };
+      divisions = [{ id: 1, name: 'Demo Division', matches: demoBuild(demoStep), ranks: DEMO_RANKS }];
+      activeDiv = 1;
+      render();
+      $('lastUpdated').innerHTML = demoStep >= DEMO_SCRIPT.length
+        ? '<span class="text-emerald-400">Demo complete</span>'
+        : `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>Demo mode · simulated tournament`;
+    }
+
     // ---------- Load ----------
     async function load(sku, silent = false) {
+      if (sku === DEMO_SKU) { demoLoad(); return; }
       const ev = await apiGet(`/events?sku%5B%5D=${encodeURIComponent(sku)}`);
       if (!ev.data || !ev.data.length) throw new Error(`No event found with code ${sku}.`);
       const event = ev.data[0];
@@ -273,21 +336,28 @@
           const scored = isScored(m);
           const sa = Number(aAlliance?.score) || 0, sb = Number(bAlliance?.score) || 0;
           if (scored) { if (sa > sb) sideA.wins++; else if (sb > sa) sideB.wins++; }
-          return { m, scored, sa, sb, label: m.matchnum };
+          return { m, scored, sa, sb, tied: scored && sa === sb, label: m.matchnum };
         });
         // Alliance rank = best qualification rank among its teams (the alliance captain)
-        const allianceRank = (teams) => {
-          const rs = teams.map(n => ranks.get(String(n).toUpperCase())).filter(Boolean);
-          return rs.length ? Math.min(...rs) : null;
+        const captainOf = (teams) => {
+          const ranked = teams.filter(n => ranks.get(String(n).toUpperCase()))
+            .sort((a, b) => ranks.get(String(a).toUpperCase()) - ranks.get(String(b).toUpperCase()));
+          return ranked.length ? { name: ranked[0], rank: ranks.get(String(ranked[0]).toUpperCase()) } : null;
         };
-        sideA.rank = allianceRank(sideA.teams);
-        sideB.rank = allianceRank(sideB.teams);
+        sideA.captain = captainOf(sideA.teams);
+        sideB.captain = captainOf(sideB.teams);
         const round = first.round;
         const needed = round === 5 ? 2 : 1;
         const winner = sideA.wins >= needed ? 'A' : sideB.wins >= needed ? 'B' : null;
         series.push({ key, round, instance: first.instance, sideA, sideB, games, winner, needed,
+          tied: games.filter(g => g.tied).map(g => g.label),
           field: first.field || '', time: first.started || first.scheduled || '' });
       });
+      // Alliance number = order of the alliance captains by qualification rank (1 = top seed)
+      const caps = new Map();
+      series.forEach(se => [se.sideA, se.sideB].forEach(sd => { if (sd.captain) caps.set(sd.captain.name, sd.captain.rank); }));
+      const numbers = new Map([...caps.entries()].sort((a, b) => a[1] - b[1]).map(([name], i) => [name, i + 1]));
+      series.forEach(se => [se.sideA, se.sideB].forEach(sd => { sd.rank = sd.captain ? numbers.get(sd.captain.name) : null; }));
       return series;
     }
 
@@ -309,6 +379,14 @@
       }
       hideStatus();
 
+      const champ = series.find(x => x.round === 5 && x.winner);
+      if (champ) {
+        const side = champ.winner === 'A' ? champ.sideA : champ.sideB;
+        $('champion').className = 'rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm flex flex-wrap items-center gap-2';
+        $('champion').innerHTML = `<span class="font-extrabold uppercase tracking-wide text-amber-400">Champions</span>` +
+          `<span class="font-bold text-white">${side.rank ? 'Alliance ' + side.rank + ': ' : ''}${side.teams.map(n => isFollowed(n) ? `<span class="px-1 rounded bg-amber-500/20 text-amber-400">${esc(n)}</span>` : esc(n)).join(', ')}</span>`;
+      } else { $('champion').className = 'hidden'; }
+
       // current series = first unscored elimination match
       const elimMatches = div.matches.filter(m => ROUND_ORDER.includes(m.round)).sort((a, b) => {
         const ta = a.started || a.scheduled || '', tb = b.started || b.scheduled || '';
@@ -328,39 +406,52 @@
       }).join('');
     }
 
-    function sideRow(side, isWinner, hasWinner, wins, showWins, lastScore) {
+    // Lower alliance number is always red and on top; higher alliance number is blue and on the bottom
+    const SIDE_COLORS = {
+      red:  { bg: 'hsl(0 75% 50% / .16)',   bar: 'hsl(0 75% 50%)',   badge: 'hsl(0 70% 42%)' },
+      blue: { bg: 'hsl(215 85% 55% / .16)', bar: 'hsl(215 85% 55%)', badge: 'hsl(215 75% 42%)' }
+    };
+
+    function sideRow(side, color, isWinner, hasWinner, wins, showWins, lastScore) {
+      const c = SIDE_COLORS[color];
+      const rowStyle = side.teams.length ? `background:${c.bg};border-left:4px solid ${c.bar}` : 'border-left:4px solid transparent';
       const names = side.teams.length
-        ? side.teams.map(n => isFollowed(n) ? `<span class="px-1 rounded bg-amber-500/20 text-amber-400 font-bold">${esc(n)}</span>` : esc(n)).join(', ')
+        ? side.teams.map(n => isFollowed(n) ? `<span class="px-1 rounded bg-amber-500/25 text-amber-400 font-bold">${esc(n)}</span>` : esc(n)).join(', ')
         : '<span class="text-slate-500 italic">TBD</span>';
       const num = showWins ? wins : (lastScore ?? '');
       const rankTag = (side.rank && side.teams.length)
-        ? `<span class="inline-block mr-1.5 px-1.5 py-0.5 rounded bg-slate-700 text-slate-200 text-[10px] font-bold align-middle" title="Alliance rank">#${side.rank}</span>` : '';
+        ? `<span class="inline-block mr-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold align-middle" style="background:${c.badge};color:#fff" title="Alliance ${side.rank}">${side.rank}</span>` : '';
       return `
-        <div class="flex items-center justify-between gap-2 px-3 py-2 ${isWinner ? 'bg-emerald-500/10' : ''} ${hasWinner && !isWinner ? 'opacity-60' : ''}">
+        <div class="flex items-center justify-between gap-2 px-3 py-2 ${hasWinner && !isWinner ? 'opacity-60' : ''}" style="${rowStyle}">
           <div class="text-xs ${isWinner ? 'font-bold text-white' : 'text-slate-200'} leading-snug">${rankTag}${names}</div>
-          <div class="text-sm font-extrabold tabular-nums ${isWinner ? 'text-emerald-400' : 'text-slate-300'}">${num}</div>
+          <div class="text-sm font-extrabold tabular-nums ${isWinner ? 'text-emerald-400' : 'text-slate-300'}">${isWinner ? '✓ ' : ''}${num}</div>
         </div>`;
     }
 
     function seriesCard(s, isCurrent) {
-      const multi = s.games.length > 1 || s.round === 5;
+      // Finals show series wins; every other round shows the score of the latest match played
+      const multi = s.round === 5;
       const played = s.games.filter(g => g.scored);
       const last = played[played.length - 1];
       const hasWinner = !!s.winner;
       const label = (s.round === 5 ? 'Finals' : `${ROUND_SHORT[s.round]} ${s.instance}`);
-      const gameLines = s.games.map(g => g.scored
-        ? `M${g.label}: ${g.sa}–${g.sb}`
-        : `M${g.label}: ${g.m.started || g.m.scheduled ? new Date(g.m.started || g.m.scheduled).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'TBD'}`).join(' · ');
+      const a = { key: 'A', side: s.sideA, score: last ? last.sa : null };
+      const b = { key: 'B', side: s.sideB, score: last ? last.sb : null };
+      const swap = s.sideA.rank && s.sideB.rank && s.sideB.rank < s.sideA.rank;
+      const top = swap ? b : a, bottom = swap ? a : b;
+      const tieText = s.tied.length ? (s.games.length > 1 ? s.tied.map(n => `M${n} TIE`).join(' · ') : 'TIE') : '';
       return `
         <div class="rounded-xl border ${isCurrent ? 'border-amber-500/60 ring-2 ring-amber-400/40' : 'border-slate-700'} bg-slate-900 overflow-hidden shadow-md">
-          <div class="flex items-center justify-between px-3 py-1.5 border-b border-slate-700 bg-slate-800 text-[11px]">
+          <div class="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-slate-700 bg-slate-800 text-[11px]">
             <span class="font-bold text-slate-300 uppercase tracking-wide">${esc(label)}</span>
-            ${isCurrent ? '<span class="font-bold text-amber-400 animate-pulse">NOW</span>' : `<span class="text-slate-400">${esc(s.field)}</span>`}
+            <span class="flex items-center gap-2">
+              ${tieText ? `<span class="font-bold px-1.5 py-0.5 rounded bg-slate-700 text-slate-200">${esc(tieText)}</span>` : ''}
+              ${isCurrent ? '<span class="font-bold text-amber-400 animate-pulse">NOW</span>' : `<span class="text-slate-400">${esc(s.field)}</span>`}
+            </span>
           </div>
-          ${sideRow(s.sideA, s.winner === 'A', hasWinner, s.sideA.wins, multi, last ? last.sa : null)}
+          ${sideRow(top.side, 'red', s.winner === top.key, hasWinner, top.side.wins, multi, top.score)}
           <div class="h-px bg-slate-700"></div>
-          ${sideRow(s.sideB, s.winner === 'B', hasWinner, s.sideB.wins, multi, last ? last.sb : null)}
-          <div class="px-3 py-1.5 border-t border-slate-700 text-[11px] text-slate-400">${esc(gameLines)}</div>
+          ${sideRow(bottom.side, 'blue', s.winner === bottom.key, hasWinner, bottom.side.wins, multi, bottom.score)}
         </div>`;
     }
 
@@ -385,9 +476,16 @@
       showStatus('Loading bracket…');
       $('loadBtn').disabled = true;
       try {
-        await load(sku);
-        stamp(false);
-        timer = setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MS);
+        if (sku === DEMO_SKU) {
+          if (!follow.length) { follow = ['586', '587']; $('teamsInput').value = '586, 587'; }
+          demoStep = 0;
+          await load(sku);
+          timer = setInterval(() => { if (demoStep < DEMO_SCRIPT.length) { demoStep++; demoLoad(); } }, DEMO_TICK_MS);
+        } else {
+          await load(sku);
+          stamp(false);
+          timer = setInterval(() => { if (!document.hidden) refresh(); }, REFRESH_MS);
+        }
         const back = new URLSearchParams({ sku, teams: follow.join(',') });
         $('backLink').href = 'vex.matches.html?' + back.toString();
       } catch (e) {
@@ -419,7 +517,7 @@
       $('teamsInput').value = teams;
       if (p.get('sku')) { $('skuInput').value = p.get('sku'); start(); }
     });
-    document.addEventListener('visibilitychange', () => { if (!document.hidden && currentSku) refresh(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden && currentSku && currentSku !== DEMO_SKU) refresh(); });
   </script>
 </body>
 </html>
